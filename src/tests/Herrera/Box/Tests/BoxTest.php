@@ -149,7 +149,7 @@ __HALT_COMPILER();
 STUB
         );
 
-        $this->box->setValues(array('replace_me' => 'replaced'));
+        $this->box->setValues(array('@replace_me@' => 'replaced'));
         $this->box->setStubUsingFile($file, true);
 
         $this->assertEquals(
@@ -162,7 +162,7 @@ STUB
     {
         $rand = rand();
 
-        $this->box->setValues(array('rand' => $rand));
+        $this->box->setValues(array('@rand@' => $rand));
 
         $this->assertEquals(
             array('@rand@' => $rand),

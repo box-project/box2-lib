@@ -212,8 +212,8 @@ STUB;
                     gettype($value)
                 );
             }
-
-            $this->values["@$key@"] = $value;
         }
+
+        $this->values = $values;
     }
 }
