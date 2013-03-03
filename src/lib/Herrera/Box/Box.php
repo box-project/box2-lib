@@ -58,6 +58,51 @@ class Box
     }
 
     /**
+     * Adds a file to the Phar, after compacting it and replacing its
+     * placeholders.
+     *
+     * @param string $file  The file name.
+     * @param string $local The local file name.
+     *
+     * @throws Exception\Exception
+     * @throws FileException If the file could not be used.
+     */
+    public function addFile($file, $local = null)
+    {
+        if (null === $local) {
+            $local = $file;
+        }
+
+        if (false === is_file($file)) {
+            throw FileException::create(
+                'The file "%s" does not exist or is not a file.',
+                $file
+            );
+        }
+
+        if (false === ($contents = @file_get_contents($file))) {
+            throw FileException::lastError();
+        }
+
+        $this->addFromString($local, $contents);
+    }
+
+    /**
+     * Adds the contents from a file to the Phar, after compacting it and
+     * replacing its placeholders.
+     *
+     * @param string $local    The local name.
+     * @param string $contents The contents.
+     */
+    public function addFromString($local, $contents)
+    {
+        $this->phar->addFromString(
+            $local,
+            $this->replaceValues($this->compactContents($local, $contents))
+        );
+    }
+
+    /**
      * Compacts the file contents using the supported compactors.
      *
      * @param string $file     The file name.

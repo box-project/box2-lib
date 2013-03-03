@@ -4,6 +4,7 @@ namespace Herrera\Box\Tests;
 
 use Herrera\Box\Box;
 use Herrera\Box\Compactor\CompactorInterface;
+use Herrera\Box\Compactor\Composer;
 use Herrera\PHPUnit\TestCase;
 use Phar;
 use org\bovigo\vfs\vfsStream;
@@ -35,6 +36,94 @@ class BoxTest extends TestCase
         $this->assertTrue(
             $this->getPropertyValue($this->box, 'compactors')
                  ->contains($compactor)
+        );
+    }
+
+    public function testAddFile()
+    {
+        $file = $this->createFile();
+
+        file_put_contents($file, 'test');
+
+        $this->box->addFile($file, 'test/test.php');
+
+        $this->assertEquals(
+            'test',
+            file_get_contents('phar://test.phar/test/test.php')
+        );
+    }
+
+    public function testAddFileNotExist()
+    {
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException',
+            'The file "/does/not/exist" does not exist or is not a file.'
+        );
+
+        $this->box->addFile('/does/not/exist');
+    }
+
+    public function testAddFileReadError()
+    {
+        vfsStreamWrapper::setRoot($root = vfsStream::newDirectory('test'));
+
+        $root->addChild(vfsStream::newFile('test.php', 0000));
+
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException',
+            'failed to open stream'
+        );
+
+        $this->box->addFile('vfs://test/test.php');
+    }
+
+    public function testAddFromString()
+    {
+        $original = <<<SOURCE
+<?php
+
+/**
+ * My class.
+ */
+class @thing@
+{
+    /**
+     * My method.
+     */
+    public function @other_thing@()
+    {
+    }
+}
+SOURCE;
+
+        $expected = <<<SOURCE
+<?php
+
+
+
+
+class MyClass
+{
+
+
+
+public function myMethod()
+{
+}
+}
+SOURCE;
+
+        $this->box->addCompactor(new Composer());
+        $this->box->setValues(array(
+            '@thing@' => 'MyClass',
+            '@other_thing@' => 'myMethod'
+        ));
+
+        $this->box->addFromString('test/test.php', $original);
+
+        $this->assertEquals(
+            $expected,
+            file_get_contents('phar://test.phar/test/test.php')
         );
     }
 
