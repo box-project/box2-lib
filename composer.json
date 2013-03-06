@@ -1,0 +1,39 @@
+{
+    "name": "herrera-io/box",
+    "description": "A library for simplifying the PHAR build process.",
+    "keywords": ["phar"],
+    "homepage": "http://herrera-io.github.com/php-box",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kevin Herrera",
+            "email": "kevin@herrera.io",
+            "homepage": "http://kevin.herrera.io"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/herrera-io/php-box/issues"
+    },
+    "require": {
+        "php": ">=5.3.3"
+    },
+    "require-dev": {
+        "herrera-io/phpunit-test-case": "1.*",
+        "mikey179/vfsStream": "1.1.0",
+        "phpunit/phpunit": "3.7.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "Herrera\\Box": "src/lib"
+        }
+    },
+    "config": {
+        "bin-dir": "bin",
+        "vendor-dir": "src/vendors"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    }
+}
