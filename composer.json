@@ -15,7 +15,8 @@
         "issues": "https://github.com/herrera-io/php-box/issues"
     },
     "require": {
-        "php": ">=5.3.3"
+        "php": ">=5.3.3",
+        "ext-phar": "*"
     },
     "require-dev": {
         "herrera-io/phpunit-test-case": "1.*",
