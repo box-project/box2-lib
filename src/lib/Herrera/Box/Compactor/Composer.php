@@ -9,14 +9,14 @@ namespace Herrera\Box\Compactor;
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
-class Composer implements CompactorInterface
+class Composer extends Compactor
 {
     /**
-     * The list of supported file extensions.
+     * The default list of supported file extensions.
      *
      * @var array
      */
-    private $extensions = array('php');
+    protected $extensions = array('php');
 
     /**
      * {@inheritDoc}
@@ -43,23 +43,5 @@ class Composer implements CompactorInterface
         }
 
         return $output;
-    }
-
-    /**
-     * Sets the supported file extensions.
-     *
-     * @param array $extensions The extensions.
-     */
-    public function setExtensions(array $extensions)
-    {
-        $this->extensions = $extensions;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function supports($file)
-    {
-        return in_array(pathinfo($file, PATHINFO_EXTENSION), $this->extensions);
     }
 }

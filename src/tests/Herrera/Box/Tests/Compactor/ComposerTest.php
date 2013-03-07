@@ -1,6 +1,6 @@
 <?php
 
-namespace Herrera\Box\Compactor;
+namespace Herrera\Box\Tests\Compactor;
 
 use Herrera\Box\Compactor\Composer;
 use Herrera\PHPUnit\TestCase;
@@ -51,18 +51,6 @@ public function aMethod()
 EXPECTED;
 
         $this->assertEquals($expected, $this->composer->compact($original));
-    }
-
-    public function testSetExtensions()
-    {
-        $extensions = array('php', 'inc', 'phtml');
-
-        $this->composer->setExtensions($extensions);
-
-        $this->assertEquals(
-            $extensions,
-            $this->getPropertyValue($this->composer, 'extensions')
-        );
     }
 
     public function testSupports()
