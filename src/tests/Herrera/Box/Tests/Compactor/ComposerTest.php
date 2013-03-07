@@ -27,7 +27,7 @@ class AClass
      */
     public function aMethod()
     {
-        \$test = true; # a comment
+        \$test = true;# a comment
     }
 }
 ORIGINAL;
