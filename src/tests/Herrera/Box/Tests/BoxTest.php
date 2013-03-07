@@ -27,6 +27,34 @@ class BoxTest extends TestCase
      */
     private $phar;
 
+    public function getPrivateKey()
+    {
+        return array(
+            <<<KEY
+-----BEGIN RSA PRIVATE KEY-----
+Proc-Type: 4,ENCRYPTED
+DEK-Info: DES-EDE3-CBC,3FF97F75E5A8F534
+
+TvEPC5L3OXjy4X5t6SRsW6J4Dfdgw0Mfjqwa4OOI88uk5L8SIezs4sHDYHba9GkG
+RKVnRhA5F+gEHrabsQiVJdWPdS8xKUgpkvHqoAT8Zl5sAy/3e/EKZ+Bd2pS/t5yQ
+aGGqliG4oWecx42QGL8rmyrbs2wnuBZmwQ6iIVIfYabwpiH+lcEmEoxomXjt9A3j
+Sh8IhaDzMLnVS8egk1QvvhFjyXyBIW5mLIue6cdEgINbxzRReNQgjlyHS8BJRLp9
+EvJcZDKJiNJt+VLncbfm4ZhbdKvSsbZbXC/Pqv06YNMY1+m9QwszHJexqjm7AyzB
+MkBFedcxcxqvSb8DaGgQfUkm9rAmbmu+l1Dncd72Cjjf8fIfuodUmKsdfYds3h+n
+Ss7K4YiiNp7u9pqJBMvUdtrVoSsNAo6i7uFa7JQTXec9sbFN1nezgq1FZmcfJYUZ
+rdpc2J1hbHTfUZWtLZebA72GU63Y9zkZzbP3SjFUSWniEEbzWbPy2sAycHrpagND
+itOQNHwZ2Me81MQQB55JOKblKkSha6cNo9nJjd8rpyo/lc/Iay9qlUyba7RO0V/t
+wm9ZeUZL+D2/JQH7zGyLxkKqcMC+CFrNYnVh0U4nk3ftZsM+jcyfl7ScVFTKmcRc
+ypcpLwfS6gyenTqiTiJx/Zca4xmRNA+Fy1EhkymxP3ku0kTU6qutT2tuYOjtz/rW
+k6oIhMcpsXFdB3N9iHT4qqElo3rVW/qLQaNIqxd8+JmE5GkHmF43PhK3HX1PCmRC
+TnvzVS0y1l8zCsRToUtv5rCBC+r8Q3gnvGGnT4jrsp98ithGIQCbbQ==
+-----END RSA PRIVATE KEY-----
+KEY
+            ,
+            'test'
+        );
+    }
+
     public function testAddCompactor()
     {
         $compactor = new Compactor();
@@ -269,6 +297,111 @@ STUB
         $this->box->setValues(array('stream' => STDOUT));
     }
 
+    /**
+     * @depends testGenerateStub
+     * @depends testGetPhar
+     */
+    public function testSign()
+    {
+        if (false === extension_loaded('openssl')) {
+            $this->markTestSkipped('The "openssl" extension is not available.');
+        }
+
+        list($key, $password) = $this->getPrivateKey();
+
+        $this->box->getPhar()->addFromString(
+            'test.php',
+            '<?php echo "Hello, world!\n";'
+        );
+
+        $this->box->getPhar()->setStub(
+            $this->box->generateStub(null, 'test.php')
+        );
+
+        $this->box->sign($key, $password);
+
+        $this->assertEquals(
+            'Hello, world!',
+            exec('php test.phar')
+        );
+    }
+
+    /**
+     * @depends testSign
+     */
+    public function testSignWriteError()
+    {
+        list($key, $password) = $this->getPrivateKey();
+
+        mkdir('test.phar.pubkey');
+
+        $this->box->getPhar()->addFromString('test.php', '<?php $test = 1;');
+
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException',
+            'failed to open stream'
+        );
+
+        $this->box->sign($key, $password);
+    }
+
+    /**
+     * @depends testSign
+     */
+    public function testSignUsingFile()
+    {
+        if (false === extension_loaded('openssl')) {
+            $this->markTestSkipped('The "openssl" extension is not available.');
+        }
+
+        list($key, $password) = $this->getPrivateKey();
+
+        $file = $this->createFile();
+
+        file_put_contents($file, $key);
+
+        $this->box->getPhar()->addFromString(
+            'test.php',
+            '<?php echo "Hello, world!\n";'
+        );
+
+        $this->box->getPhar()->setStub(
+            $this->box->generateStub(null, 'test.php')
+        );
+
+        $this->box->signUsingFile($file, $password);
+
+        $this->assertEquals(
+            'Hello, world!',
+            exec('php test.phar')
+        );
+    }
+
+    public function testSignUsingFileNotExist()
+    {
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException',
+            'The file "/does/not/exist" does not exist or is not a file.'
+        );
+
+        $this->box->signUsingFile('/does/not/exist');
+    }
+
+    public function testSignUsingFileReadError()
+    {
+        $root = vfsStream::newDirectory('test');
+        $root->addChild(vfsStream::newFile('private.key', 0000));
+
+        vfsStreamWrapper::setRoot($root);
+
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException',
+            'failed to open stream'
+        );
+
+        $this->box->signUsingFile('vfs://test/private.key');
+    }
+
     protected function tearDown()
     {
         unset($this->box, $this->phar);
@@ -281,7 +414,7 @@ STUB
         chdir($this->cwd = $this->createDir());
 
         $this->phar = new Phar('test.phar');
-        $this->box = new Box($this->phar);
+        $this->box = new Box($this->phar, 'test.phar');
     }
 }
 

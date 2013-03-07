@@ -5,6 +5,7 @@ namespace Herrera\Box;
 use Herrera\Box\Compactor\CompactorInterface;
 use Herrera\Box\Exception\FileException;
 use Herrera\Box\Exception\InvalidArgumentException;
+use Herrera\Box\Exception\OpenSslException;
 use Phar;
 use SplObjectStorage;
 
@@ -23,6 +24,13 @@ class Box
     private $compactors;
 
     /**
+     * The path to the Phar file.
+     *
+     * @var string
+     */
+    private $file;
+
+    /**
      * The Phar instance.
      *
      * @var Phar
@@ -39,11 +47,13 @@ class Box
     /**
      * Sets the Phar instance.
      *
-     * @param Phar $phar The instance.
+     * @param Phar   $phar The instance.
+     * @param string $file The path to the Phar file.
      */
-    public function __construct(Phar $phar)
+    public function __construct(Phar $phar, $file)
     {
         $this->compactors = new SplObjectStorage();
+        $this->file = $file;
         $this->phar = $phar;
     }
 
@@ -260,5 +270,72 @@ STUB;
         }
 
         $this->values = $values;
+    }
+
+    /**
+     * Signs the Phar using a private key.
+     *
+     * @param string $key      The private key.
+     * @param string $password The private key password.
+     *
+     * @throws Exception\Exception
+     * @throws OpenSslException If the "openssl" extension could not be used
+     *                          or has generated an error.
+     */
+    public function sign($key, $password = null)
+    {
+        OpenSslException::reset();
+
+        if (false === extension_loaded('openssl')) {
+            throw OpenSslException::create(
+                'The "openssl" extension is not available.'
+            );
+        }
+
+        if (false === ($resource = openssl_pkey_get_private($key, $password))) {
+            throw OpenSslException::lastError();
+        }
+
+        if (false === openssl_pkey_export($resource, $private)) {
+            throw OpenSslException::lastError();
+        }
+
+        if (false === ($details = openssl_pkey_get_details($resource))) {
+            throw OpenSslException::lastError();
+        }
+
+        $this->phar->setSignatureAlgorithm(Phar::OPENSSL, $private);
+
+        if (false === @file_put_contents(
+            $this->file . '.pubkey',
+            $details['key']
+        )){
+            throw FileException::lastError();
+        }
+    }
+
+    /**
+     * Signs the Phar using a private key file.
+     *
+     * @param string $file     The private key file name.
+     * @param string $password The private key password.
+     *
+     * @throws Exception\Exception
+     * @throws FileException If the private key file could not be read.
+     */
+    public function signUsingFile($file, $password = null)
+    {
+        if (false === is_file($file)) {
+            throw FileException::create(
+                'The file "%s" does not exist or is not a file.',
+                $file
+            );
+        }
+
+        if (false === ($key = @file_get_contents($file))) {
+            throw FileException::lastError();
+        }
+
+        $this->sign($key, $password);
     }
 }
