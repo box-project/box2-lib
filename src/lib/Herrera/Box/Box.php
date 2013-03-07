@@ -104,6 +104,35 @@ class Box
     }
 
     /**
+     * Sets the bootstrap loader stub using a file.
+     *
+     * @param string  $file    The file path.
+     * @param boolean $replace Replace placeholders?
+     *
+     * @throws Exception\Exception
+     * @throws FileException If the stub file could not be used.
+     */
+    public function setStubUsingFile($file, $replace = false)
+    {
+        if (false === is_file($file)) {
+            throw FileException::create(
+                'The file "%s" does not exist or is not a file.',
+                $file
+            );
+        }
+
+        if (false === ($contents = @file_get_contents($file))) {
+            throw FileException::lastError();
+        }
+
+        if ($replace) {
+            $contents = $this->replaceValues($contents);
+        }
+
+        $this->phar->setStub($contents);
+    }
+
+    /**
      * Sets the placeholder values.
      *
      * @param array $values The values.

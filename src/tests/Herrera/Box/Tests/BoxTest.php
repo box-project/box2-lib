@@ -6,6 +6,8 @@ use Herrera\Box\Box;
 use Herrera\Box\Compactor\CompactorInterface;
 use Herrera\PHPUnit\TestCase;
 use Phar;
+use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamWrapper;
 
 class BoxTest extends TestCase
 {
@@ -64,6 +66,51 @@ class BoxTest extends TestCase
         ));
 
         $this->assertEquals('ab@3@', $this->box->replaceValues('@1@@2@@3@'));
+    }
+
+    public function testSetStubUsingFileNotExist()
+    {
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException',
+            'The file "/does/not/exist" does not exist or is not a file.'
+        );
+
+        $this->box->setStubUsingFile('/does/not/exist');
+    }
+
+    public function testSetStubUsingFileReadError()
+    {
+        vfsStreamWrapper::setRoot($root = vfsStream::newDirectory('test'));
+
+        $root->addChild(vfsStream::newFile('test.php', 0000));
+
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException',
+            'failed to open stream'
+        );
+
+        $this->box->setStubUsingFile('vfs://test/test.php');
+    }
+
+    public function testSetStubUsingFile()
+    {
+        $file = $this->createFile();
+
+        file_put_contents($file, <<<STUB
+#!/usr/bin/env php
+<?php
+echo "@replace_me@";
+__HALT_COMPILER();
+STUB
+        );
+
+        $this->box->setValues(array('replace_me' => 'replaced'));
+        $this->box->setStubUsingFile($file, true);
+
+        $this->assertEquals(
+            'replaced',
+            exec('php test.phar')
+        );
     }
 
     public function testSetValues()
