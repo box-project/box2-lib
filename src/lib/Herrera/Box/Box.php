@@ -2,8 +2,11 @@
 
 namespace Herrera\Box;
 
+use Herrera\Box\Compactor\CompactorInterface;
+use Herrera\Box\Exception\FileException;
 use Herrera\Box\Exception\InvalidArgumentException;
 use Phar;
+use SplObjectStorage;
 
 /**
  * Provides additional, complimentary functionality to the Phar class.
@@ -12,6 +15,13 @@ use Phar;
  */
 class Box
 {
+    /**
+     * The source code compactors.
+     *
+     * @var SplObjectStorage
+     */
+    private $compactors;
+
     /**
      * The Phar instance.
      *
@@ -33,7 +43,38 @@ class Box
      */
     public function __construct(Phar $phar)
     {
+        $this->compactors = new SplObjectStorage();
         $this->phar = $phar;
+    }
+
+    /**
+     * Adds a file contents compactor.
+     *
+     * @param CompactorInterface $compactor The compactor.
+     */
+    public function addCompactor(CompactorInterface $compactor)
+    {
+        $this->compactors->attach($compactor);
+    }
+
+    /**
+     * Compacts the file contents using the supported compactors.
+     *
+     * @param string $file     The file name.
+     * @param string $contents The file contents.
+     *
+     * @return string The compacted contents.
+     */
+    public function compactContents($file, $contents)
+    {
+        foreach ($this->compactors as $compactor) {
+            /** @var $compactor CompactorInterface */
+            if ($compactor->supports($file)) {
+                $contents = $compactor->compact($contents);
+            }
+        }
+
+        return $contents;
     }
 
     /**

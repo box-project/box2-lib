@@ -3,6 +3,7 @@
 namespace Herrera\Box\Tests;
 
 use Herrera\Box\Box;
+use Herrera\Box\Compactor\CompactorInterface;
 use Herrera\PHPUnit\TestCase;
 use Phar;
 
@@ -22,6 +23,33 @@ class BoxTest extends TestCase
      * @var Phar
      */
     private $phar;
+
+    public function testAddCompactor()
+    {
+        $compactor = new Compactor();
+
+        $this->box->addCompactor($compactor);
+
+        $this->assertTrue(
+            $this->getPropertyValue($this->box, 'compactors')
+                 ->contains($compactor)
+        );
+    }
+
+    /**
+     * @depends testAddCompactor
+     */
+    public function testCompactContents()
+    {
+        $compactor = new Compactor();
+
+        $this->box->addCompactor($compactor);
+
+        $this->assertEquals(
+            'my value',
+            $this->box->compactContents('test.php', ' my value ')
+        );
+    }
 
     public function testGetPhar()
     {
@@ -73,5 +101,18 @@ class BoxTest extends TestCase
 
         $this->phar = new Phar('test.phar');
         $this->box = new Box($this->phar);
+    }
+}
+
+class Compactor implements CompactorInterface
+{
+    public function compact($contents)
+    {
+        return trim($contents);
+    }
+
+    public function supports($file)
+    {
+        return ('php' === pathinfo($file, PATHINFO_EXTENSION));
     }
 }
