@@ -170,6 +170,17 @@ SOURCE;
         );
     }
 
+    public function testCreate()
+    {
+        $box = Box::create('test2.phar');
+
+        $this->assertInstanceOf('Herrera\\Box\\Box', $box);
+        $this->assertEquals(
+            'test2.phar',
+            $this->getPropertyValue($box, 'file')
+        );
+    }
+
     public function testGenerateStub()
     {
         $file = $this->createFile();

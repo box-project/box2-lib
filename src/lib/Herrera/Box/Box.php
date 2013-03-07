@@ -133,6 +133,20 @@ class Box
     }
 
     /**
+     * Creates a new Phar and Box instance.
+     *
+     * @param string  $file  The file name.
+     * @param integer $flags The RecursiveDirectoryIterator flags.
+     * @param string  $alias The Phar alias.
+     *
+     * @return Box The Box instance.
+     */
+    public static function create($file, $flags = null, $alias = null)
+    {
+        return new Box(new Phar($file, $flags, $alias), $file);
+    }
+
+    /**
      * Generates a bootstrap loader stub.
      *
      * @param string  $alias     The alias to map to.
