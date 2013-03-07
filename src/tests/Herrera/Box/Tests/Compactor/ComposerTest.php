@@ -53,6 +53,18 @@ EXPECTED;
         $this->assertEquals($expected, $this->composer->compact($original));
     }
 
+    public function testSetExtensions()
+    {
+        $extensions = array('php', 'inc', 'phtml');
+
+        $this->composer->setExtensions($extensions);
+
+        $this->assertEquals(
+            $extensions,
+            $this->getPropertyValue($this->composer, 'extensions')
+        );
+    }
+
     public function testSupports()
     {
         $this->assertTrue($this->composer->supports('test.php'));

@@ -12,6 +12,13 @@ namespace Herrera\Box\Compactor;
 class Composer implements CompactorInterface
 {
     /**
+     * The list of supported file extensions.
+     *
+     * @var array
+     */
+    private $extensions = array('php');
+
+    /**
      * {@inheritDoc}
      */
     public function compact($contents)
@@ -39,10 +46,20 @@ class Composer implements CompactorInterface
     }
 
     /**
+     * Sets the supported file extensions.
+     *
+     * @param array $extensions The extensions.
+     */
+    public function setExtensions(array $extensions)
+    {
+        $this->extensions = $extensions;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function supports($file)
     {
-        return ('php' === pathinfo($file, PATHINFO_EXTENSION));
+        return in_array(pathinfo($file, PATHINFO_EXTENSION), $this->extensions);
     }
 }
