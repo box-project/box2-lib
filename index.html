@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Php-box by herrera-io</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Php-box</h1>
+        <p>A library for simplifying the PHAR build process.</p>
+
+        <p class="view"><a href="https://github.com/herrera-io/php-box">View the Project on GitHub <small>herrera-io/php-box</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/herrera-io/php-box/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/herrera-io/php-box/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/herrera-io/php-box">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>Box</h1>
+
+<p><a href="https://travis-ci.org/herrera-io/php-box"><img src="https://travis-ci.org/herrera-io/php-box.png?branch=master" alt="Build Status"></a></p>
+
+<p>A class for simplifying the PHAR build process.</p>
+
+<h2>Summary</h2>
+
+<p>The Box class provides additional features for the Phar building process:</p>
+
+<ul>
+<li>compact file contents according to type</li>
+<li>search and replace placeholder values</li>
+</ul><p>as well as improving others:</p>
+
+<ul>
+<li>generating stubs</li>
+<li>set stubs using files</li>
+<li>signing using private keys (and private key files)</li>
+</ul><h2>Installation</h2>
+
+<p>Add it to your list of Composer dependencies:</p>
+
+<div class="highlight"><pre><span class="nv">$ </span>composer require herrera-io/box<span class="o">=</span>1.*
+</pre></div>
+
+<h2>Usage</h2>
+
+<p>Building the Phar:</p>
+
+<div class="highlight"><pre><span class="nv">$box</span> <span class="o">=</span> <span class="nx">Box</span><span class="o">::</span><span class="na">create</span><span class="p">(</span><span class="s1">'test.phar'</span><span class="p">);</span>
+<span class="nv">$box</span><span class="o">-&gt;</span><span class="na">buildFromDirectory</span><span class="p">(</span><span class="s1">'/path/to/dir'</span><span class="p">);</span>
+<span class="nv">$box</span><span class="o">-&gt;</span><span class="na">getPhar</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">setStub</span><span class="p">(</span><span class="nv">$box</span><span class="o">-&gt;</span><span class="na">generateStub</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="s1">'/path/to/dir/run.php'</span><span class="p">));</span>
+</pre></div>
+
+<p>Running the Phar:</p>
+
+<div class="highlight"><pre><span class="nv">$ </span>php test.phar
+That run script <span class="o">(</span>/path/to/dir/run.php<span class="o">)</span>.
+</pre></div>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/herrera-io">herrera-io</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
