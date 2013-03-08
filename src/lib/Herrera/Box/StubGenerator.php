@@ -269,7 +269,7 @@ STUB;
     }
 
     /**
-     * Sets the "use Phar::webPhar() instead of Phar::mapPhar()" flag.
+     * Use Phar::webPhar() instead of Phar::mapPhar()?
      *
      * @param boolean $web Use Phar::webPhar()?
      *
