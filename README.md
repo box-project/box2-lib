@@ -8,7 +8,7 @@ A class for simplifying the PHAR build process.
 Summary
 -------
 
-The Box class provides additional features for the Phar building process:
+The Box library provides additional features for the Phar building process:
 
 - compact file contents according to type
 - search and replace placeholder values
@@ -34,14 +34,23 @@ Usage
 Building the Phar:
 
 ```php
+<?php
+
+use Herrera\Box\Box;
+use Herrera\Box\StubGenerator;
+
 $box = Box::create('test.phar');
 $box->buildFromDirectory('/path/to/dir');
-$box->getPhar()->setStub($box->generateStub(null, '/path/to/dir/run.php'));
+$box->getPhar()->setStub(
+    StubGenerator::create()
+        ->index('path/to/script.php')
+        ->generate()
+);
 ```
 
 Running the Phar:
 
 ```sh
 $ php test.phar
-That run script (/path/to/dir/run.php).
+That index script (path/to/script.php).
 ```
