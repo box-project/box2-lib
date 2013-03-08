@@ -2,12 +2,19 @@
 
 namespace Herrera\Box;
 
+use FilesystemIterator;
 use Herrera\Box\Compactor\CompactorInterface;
 use Herrera\Box\Exception\FileException;
 use Herrera\Box\Exception\InvalidArgumentException;
 use Herrera\Box\Exception\OpenSslException;
+use Herrera\Box\Exception\UnexpectedValueException;
 use Phar;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RegexIterator;
+use SplFileInfo;
 use SplObjectStorage;
+use Traversable;
 
 /**
  * Provides additional, complimentary functionality to the Phar class.
@@ -110,6 +117,90 @@ class Box
             $local,
             $this->replaceValues($this->compactContents($local, $contents))
         );
+    }
+
+    /**
+     * Similar to Phar::buildFromDirectory(), except the files will be
+     * compacted and their placeholders replaced.
+     *
+     * @param string $dir   The directory.
+     * @param string $regex The regular expression filter.
+     */
+    public function buildFromDirectory($dir, $regex = null)
+    {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(
+                $dir,
+                FilesystemIterator::KEY_AS_PATHNAME
+                    | FilesystemIterator::CURRENT_AS_FILEINFO
+                    | FilesystemIterator::SKIP_DOTS
+            )
+        );
+
+        if ($regex) {
+            $iterator = new RegexIterator($iterator, $regex);
+        }
+
+        $this->buildFromIterator($iterator, $dir);
+    }
+
+    /**
+     * Similar to Phar::buildFromIterator(), except the files will be compacted
+     * and their placeholders replaced.
+     *
+     * @param Traversable $iterator The iterator.
+     * @param string      $base     The base directory path.
+     *
+     * @throws Exception\Exception
+     * @throws UnexpectedValueException If the iterator value is unexpected.
+     */
+    public function buildFromIterator(Traversable $iterator, $base = null)
+    {
+        if ($base) {
+            $base = canonical_path($base . DIRECTORY_SEPARATOR);
+        }
+
+        foreach ($iterator as $key => $value) {
+            if (is_string($value)) {
+                $key = canonical_path($key);
+                $value = canonical_path($value);
+
+                if (is_dir($value)) {
+                    $this->phar->addEmptyDir($key);
+                } else {
+                    $this->addFile($value, $key);
+                }
+            } elseif ($value instanceof SplFileInfo) {
+                if (null === $base) {
+                    throw InvalidArgumentException::create(
+                        'The $base argument is required for SplFileInfo values.'
+                    );
+                }
+
+                /** @var $value SplFileInfo */
+                $real = $value->getRealPath();
+
+                if (0 !== strpos($real, $base)) {
+                    throw UnexpectedValueException::create(
+                        'The file "%s" is not in the base directory.',
+                        $real
+                    );
+                }
+
+                $local = str_replace($base, '', $real);
+
+                if ($value->isDir()) {
+                    $this->phar->addEmptyDir($local);
+                } else {
+                    $this->addFile($real, $local);
+                }
+            } else {
+                throw UnexpectedValueException::create(
+                    'The iterator value "%s" was not expected.',
+                    gettype($value)
+                );
+            }
+        }
     }
 
     /**

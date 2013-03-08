@@ -2,13 +2,18 @@
 
 namespace Herrera\Box\Tests;
 
+use ArrayIterator;
+use FilesystemIterator;
 use Herrera\Box\Box;
 use Herrera\Box\Compactor\CompactorInterface;
 use Herrera\Box\Compactor\Composer;
 use Herrera\PHPUnit\TestCase;
-use Phar;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamWrapper;
+use Phar;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 
 class BoxTest extends TestCase
 {
@@ -153,6 +158,114 @@ SOURCE;
             $expected,
             file_get_contents('phar://test.phar/test/test.php')
         );
+    }
+
+    public function testBuildFromDirectory()
+    {
+        mkdir('test/sub', 0755, true);
+        touch('test/sub.txt');
+
+        file_put_contents(
+            'test/sub/test.php',
+            '<?php echo "Hello, @name@!\n";'
+        );
+
+        $this->box->setValues(array('@name@' => 'world'));
+        $this->box->buildFromDirectory($this->cwd, '/\.php$/');
+
+        $this->assertFalse(isset($this->phar['test/sub.txt']));
+        $this->assertEquals(
+            '<?php echo "Hello, world!\n";',
+            file_get_contents('phar://test.phar/test/sub/test.php')
+        );
+    }
+
+    public function testBuildFromIterator()
+    {
+        mkdir('test/sub', 0755, true);
+
+        file_put_contents(
+            'test/sub/test.php',
+            '<?php echo "Hello, @name@!\n";'
+        );
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(
+                $this->cwd,
+                FilesystemIterator::KEY_AS_PATHNAME
+                | FilesystemIterator::CURRENT_AS_FILEINFO
+                | FilesystemIterator::SKIP_DOTS
+            )
+        );
+
+        $this->box->setValues(array('@name@' => 'world'));
+        $this->box->buildFromIterator($iterator, $this->cwd);
+
+        $this->assertEquals(
+            '<?php echo "Hello, world!\n";',
+            file_get_contents('phar://test.phar/test/sub/test.php')
+        );
+    }
+
+    /**
+     * @depends testBuildFromIterator
+     */
+    public function testBuildFromIteratorMixed()
+    {
+        mkdir('object');
+        mkdir('string');
+
+        touch('object.php');
+        touch('string.php');
+
+        $this->box->buildFromIterator(new ArrayIterator(array(
+            'object' => new SplFileInfo($this->cwd . '/object'),
+            'string' => $this->cwd . '/string',
+            'object.php' => new SplFileInfo($this->cwd . '/object.php'),
+            'string.php' => $this->cwd . '/string.php',
+        )), $this->cwd);
+
+        /** @var $phar SplFileInfo[] */
+        $phar = $this->phar;
+
+        $this->assertTrue($phar['object']->isDir());
+        $this->assertTrue($phar['string']->isDir());
+        $this->assertTrue($phar['object.php']->isFile());
+        $this->assertTrue($phar['string.php']->isFile());
+    }
+
+    public function testBuildFromIteratorBaseRequired()
+    {
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\InvalidArgumentException',
+            'The $base argument is required for SplFileInfo values.'
+        );
+
+        $this->box->buildFromIterator(new ArrayIterator(array(
+            new SplFileInfo($this->cwd)
+        )));
+    }
+
+    public function testBuildFromIteratorOutsideBase()
+    {
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\UnexpectedValueException',
+            "The file \"{$this->cwd}\" is not in the base directory."
+        );
+
+        $this->box->buildFromIterator(new ArrayIterator(array(
+            new SplFileInfo($this->cwd)
+        )), __DIR__);
+    }
+
+    public function testBuildFromIteratorInvalid()
+    {
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\UnexpectedValueException',
+            'The iterator value "resource" was not expected.'
+        );
+
+        $this->box->buildFromIterator(new ArrayIterator(array(STDOUT)));
     }
 
     /**
