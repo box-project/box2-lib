@@ -60,7 +60,7 @@ class StubGeneratorTest extends TestCase
              ->mimetypes(array('phtml' => Phar::PHPS))
              ->mung(array('REQUEST_URI'))
              ->notFound('not_found.php')
-             ->rewrite('rewrite.php')
+             ->rewrite('rewrite')
              ->web(true);
 
         $phps = Phar::PHPS;
@@ -77,7 +77,7 @@ class StubGeneratorTest extends TestCase
  */
 Phar::webPhar('test.phar', 'index.php', 'not_found.php', array (
   'phtml' => $phps,
-), 'rewrite.php');
+), 'rewrite');
 Phar::interceptFileFuncs();
 Phar::mungServer(array (
   0 => 'REQUEST_URI',
