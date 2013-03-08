@@ -258,6 +258,16 @@ SOURCE;
         )), __DIR__);
     }
 
+    public function testBuildFromIteratorInvalidKey()
+    {
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\UnexpectedValueException',
+            'The key returned by the iterator (integer) is not a string.'
+        );
+
+        $this->box->buildFromIterator(new ArrayIterator(array('test')));
+    }
+
     public function testBuildFromIteratorInvalid()
     {
         $this->setExpectedException(
@@ -265,7 +275,9 @@ SOURCE;
             'The iterator value "resource" was not expected.'
         );
 
-        $this->box->buildFromIterator(new ArrayIterator(array(STDOUT)));
+        $this->box->buildFromIterator(new ArrayIterator(array(
+            'stream' => STDOUT
+        )));
     }
 
     /**

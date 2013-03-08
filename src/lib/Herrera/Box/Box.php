@@ -162,6 +162,13 @@ class Box
 
         foreach ($iterator as $key => $value) {
             if (is_string($value)) {
+                if (false === is_string($key)) {
+                    throw UnexpectedValueException::create(
+                        'The key returned by the iterator (%s) is not a string.',
+                        gettype($key)
+                    );
+                }
+
                 $key = canonical_path($key);
                 $value = canonical_path($value);
 
