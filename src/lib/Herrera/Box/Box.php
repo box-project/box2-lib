@@ -372,7 +372,7 @@ STUB;
      */
     public function setValues(array $values)
     {
-        foreach ($values as $key => $value) {
+        foreach ($values as $value) {
             if (false === is_scalar($value)) {
                 throw InvalidArgumentException::create(
                     'Non-scalar values (such as %s) are not supported.',
