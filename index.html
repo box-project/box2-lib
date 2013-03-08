@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Php-box by herrera-io</title>
+    <title>Box by herrera-io</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -15,7 +15,7 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1>Php-box</h1>
+        <h1>Box</h1>
         <p>A library for simplifying the PHAR build process.</p>
 
         <p class="view"><a href="https://github.com/herrera-io/php-box">View the Project on GitHub <small>herrera-io/php-box</small></a></p>
@@ -28,15 +28,13 @@
         </ul>
       </header>
       <section>
-        <h1>Box</h1>
-
-<p><a href="https://travis-ci.org/herrera-io/php-box"><img src="https://travis-ci.org/herrera-io/php-box.png?branch=master" alt="Build Status"></a></p>
+        <p><a href="https://travis-ci.org/herrera-io/php-box"><img src="https://travis-ci.org/herrera-io/php-box.png?branch=master" alt="Build Status"></a></p>
 
 <p>A class for simplifying the PHAR build process.</p>
 
 <h2>Summary</h2>
 
-<p>The Box class provides additional features for the Phar building process:</p>
+<p>The Box library provides additional features for the Phar building process:</p>
 
 <ul>
 <li>compact file contents according to type</li>
@@ -58,15 +56,24 @@
 
 <p>Building the Phar:</p>
 
-<div class="highlight"><pre><span class="nv">$box</span> <span class="o">=</span> <span class="nx">Box</span><span class="o">::</span><span class="na">create</span><span class="p">(</span><span class="s1">'test.phar'</span><span class="p">);</span>
+<div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="k">use</span> <span class="nx">Herrera\Box\Box</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Herrera\Box\StubGenerator</span><span class="p">;</span>
+
+<span class="nv">$box</span> <span class="o">=</span> <span class="nx">Box</span><span class="o">::</span><span class="na">create</span><span class="p">(</span><span class="s1">'test.phar'</span><span class="p">);</span>
 <span class="nv">$box</span><span class="o">-&gt;</span><span class="na">buildFromDirectory</span><span class="p">(</span><span class="s1">'/path/to/dir'</span><span class="p">);</span>
-<span class="nv">$box</span><span class="o">-&gt;</span><span class="na">getPhar</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">setStub</span><span class="p">(</span><span class="nv">$box</span><span class="o">-&gt;</span><span class="na">generateStub</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="s1">'/path/to/dir/run.php'</span><span class="p">));</span>
+<span class="nv">$box</span><span class="o">-&gt;</span><span class="na">getPhar</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">setStub</span><span class="p">(</span>
+    <span class="nx">StubGenerator</span><span class="o">::</span><span class="na">create</span><span class="p">()</span>
+        <span class="o">-&gt;</span><span class="na">index</span><span class="p">(</span><span class="s1">'path/to/script.php'</span><span class="p">)</span>
+        <span class="o">-&gt;</span><span class="na">generate</span><span class="p">()</span>
+<span class="p">);</span>
 </pre></div>
 
 <p>Running the Phar:</p>
 
 <div class="highlight"><pre><span class="nv">$ </span>php test.phar
-That run script <span class="o">(</span>/path/to/dir/run.php<span class="o">)</span>.
+That index script <span class="o">(</span>path/to/script.php<span class="o">)</span>.
 </pre></div>
       </section>
       <footer>
