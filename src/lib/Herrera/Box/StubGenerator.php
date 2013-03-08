@@ -7,7 +7,7 @@ use Herrera\Box\Exception\InvalidArgumentException;
 /**
  * Generates a new PHP bootstrap loader stub for a Phar.
  *
- * @author Kevin Herrera <kherrera@cinahl.com>
+ * @author Kevin Herrera <kevin@herrera.io>
  */
 class StubGenerator
 {
