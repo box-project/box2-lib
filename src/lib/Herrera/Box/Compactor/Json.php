@@ -10,6 +10,13 @@ namespace Herrera\Box\Compactor;
 class Json extends Compactor
 {
     /**
+     * The default list of supported file extensions.
+     *
+     * @var array
+     */
+    protected $extensions = array('json');
+
+    /**
      * {@inheritDoc}
      */
     public function compact($contents)
