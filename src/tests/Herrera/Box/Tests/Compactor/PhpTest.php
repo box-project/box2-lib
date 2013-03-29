@@ -2,13 +2,13 @@
 
 namespace Herrera\Box\Tests\Compactor;
 
-use Herrera\Box\Compactor\Composer;
+use Herrera\Box\Compactor\Php;
 use Herrera\PHPUnit\TestCase;
 
-class ComposerTest extends TestCase
+class PhpTest extends TestCase
 {
     /**
-     * @var Composer
+     * @var Php
      */
     private $composer;
 
@@ -60,6 +60,6 @@ EXPECTED;
 
     protected function setUp()
     {
-        $this->composer = new Composer();
+        $this->composer = new Php();
     }
 }

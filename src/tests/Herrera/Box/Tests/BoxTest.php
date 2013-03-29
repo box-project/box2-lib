@@ -6,7 +6,7 @@ use ArrayIterator;
 use FilesystemIterator;
 use Herrera\Box\Box;
 use Herrera\Box\Compactor\CompactorInterface;
-use Herrera\Box\Compactor\Composer;
+use Herrera\Box\Compactor\Php;
 use Herrera\Box\StubGenerator;
 use Herrera\PHPUnit\TestCase;
 use org\bovigo\vfs\vfsStream;
@@ -147,7 +147,7 @@ public function myMethod()
 }
 SOURCE;
 
-        $this->box->addCompactor(new Composer());
+        $this->box->addCompactor(new Php());
         $this->box->setValues(array(
             '@thing@' => 'MyClass',
             '@other_thing@' => 'myMethod'
