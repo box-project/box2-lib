@@ -16,6 +16,8 @@ class ExceptionTest extends TestCase
 
     public function testLastError()
     {
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        /** @noinspection PhpUndefinedVariableInspection */
         @$test;
 
         $exception = Exception::lastError();

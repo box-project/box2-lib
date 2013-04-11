@@ -5,7 +5,6 @@ namespace Herrera\Box\Tests;
 use ArrayIterator;
 use FilesystemIterator;
 use Herrera\Box\Box;
-use Herrera\Box\Compactor\CompactorInterface;
 use Herrera\Box\Compactor\Php;
 use Herrera\Box\StubGenerator;
 use Herrera\PHPUnit\TestCase;
@@ -148,10 +147,12 @@ public function myMethod()
 SOURCE;
 
         $this->box->addCompactor(new Php());
-        $this->box->setValues(array(
-            '@thing@' => 'MyClass',
-            '@other_thing@' => 'myMethod'
-        ));
+        $this->box->setValues(
+            array(
+                '@thing@' => 'MyClass',
+                '@other_thing@' => 'myMethod'
+            )
+        );
 
         $this->box->addFromString('test/test.php', $original);
 
@@ -219,12 +220,17 @@ SOURCE;
         touch('object.php');
         touch('string.php');
 
-        $this->box->buildFromIterator(new ArrayIterator(array(
-            'object' => new SplFileInfo($this->cwd . '/object'),
-            'string' => $this->cwd . '/string',
-            'object.php' => new SplFileInfo($this->cwd . '/object.php'),
-            'string.php' => $this->cwd . '/string.php',
-        )), $this->cwd);
+        $this->box->buildFromIterator(
+            new ArrayIterator(
+                array(
+                    'object' => new SplFileInfo($this->cwd . '/object'),
+                    'string' => $this->cwd . '/string',
+                    'object.php' => new SplFileInfo($this->cwd . '/object.php'),
+                    'string.php' => $this->cwd . '/string.php',
+                )
+            ),
+            $this->cwd
+        );
 
         /** @var $phar SplFileInfo[] */
         $phar = $this->phar;
@@ -242,9 +248,9 @@ SOURCE;
             'The $base argument is required for SplFileInfo values.'
         );
 
-        $this->box->buildFromIterator(new ArrayIterator(array(
-            new SplFileInfo($this->cwd)
-        )));
+        $this->box->buildFromIterator(
+            new ArrayIterator(array(new SplFileInfo($this->cwd)))
+        );
     }
 
     public function testBuildFromIteratorOutsideBase()
@@ -254,9 +260,10 @@ SOURCE;
             "The file \"{$this->cwd}\" is not in the base directory."
         );
 
-        $this->box->buildFromIterator(new ArrayIterator(array(
-            new SplFileInfo($this->cwd)
-        )), __DIR__);
+        $this->box->buildFromIterator(
+            new ArrayIterator(array(new SplFileInfo($this->cwd))),
+            __DIR__
+        );
     }
 
     public function testBuildFromIteratorInvalidKey()
@@ -276,9 +283,9 @@ SOURCE;
             'The iterator value "resource" was not expected.'
         );
 
-        $this->box->buildFromIterator(new ArrayIterator(array(
-            'stream' => STDOUT
-        )));
+        $this->box->buildFromIterator(
+            new ArrayIterator(array('stream' => STDOUT))
+        );
     }
 
     /**
@@ -314,10 +321,14 @@ SOURCE;
 
     public function testReplaceValues()
     {
-        $this->setPropertyValue($this->box, 'values', array(
-            '@1@' => 'a',
-            '@2@' => 'b'
-        ));
+        $this->setPropertyValue(
+            $this->box,
+            'values',
+            array(
+                '@1@' => 'a',
+                '@2@' => 'b'
+            )
+        );
 
         $this->assertEquals('ab@3@', $this->box->replaceValues('@1@@2@@3@'));
     }
@@ -350,7 +361,9 @@ SOURCE;
     {
         $file = $this->createFile();
 
-        file_put_contents($file, <<<STUB
+        file_put_contents(
+            $file,
+            <<<STUB
 #!/usr/bin/env php
 <?php
 echo "@replace_me@";
@@ -510,18 +523,5 @@ STUB
 
         $this->phar = new Phar('test.phar');
         $this->box = new Box($this->phar, 'test.phar');
-    }
-}
-
-class Compactor implements CompactorInterface
-{
-    public function compact($contents)
-    {
-        return trim($contents);
-    }
-
-    public function supports($file)
-    {
-        return ('php' === pathinfo($file, PATHINFO_EXTENSION));
     }
 }

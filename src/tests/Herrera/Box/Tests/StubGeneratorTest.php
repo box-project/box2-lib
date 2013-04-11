@@ -45,10 +45,12 @@ class StubGeneratorTest extends TestCase
     {
         $this->generator->intercept(true);
 
-        $this->assertTrue($this->getPropertyValue(
-            $this->generator,
-            'intercept'
-        ));
+        $this->assertTrue(
+            $this->getPropertyValue(
+                $this->generator,
+                'intercept'
+            )
+        );
     }
 
     public function testGenerate()
@@ -172,10 +174,7 @@ STUB
     {
         $this->generator->web(true);
 
-        $this->assertTrue($this->getPropertyValue(
-            $this->generator,
-            'web'
-        ));
+        $this->assertTrue($this->getPropertyValue($this->generator, 'web'));
     }
 
     protected function setUp()

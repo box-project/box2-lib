@@ -132,8 +132,8 @@ class Box
             new RecursiveDirectoryIterator(
                 $dir,
                 FilesystemIterator::KEY_AS_PATHNAME
-                    | FilesystemIterator::CURRENT_AS_FILEINFO
-                    | FilesystemIterator::SKIP_DOTS
+                | FilesystemIterator::CURRENT_AS_FILEINFO
+                | FilesystemIterator::SKIP_DOTS
             )
         );
 
@@ -336,29 +336,34 @@ class Box
         OpenSslException::reset();
 
         if (false === extension_loaded('openssl')) {
+            // @codeCoverageIgnoreStart
             throw OpenSslException::create(
                 'The "openssl" extension is not available.'
             );
+            // @codeCoverageIgnoreEnd
         }
 
         if (false === ($resource = openssl_pkey_get_private($key, $password))) {
+            // @codeCoverageIgnoreStart
             throw OpenSslException::lastError();
+            // @codeCoverageIgnoreEnd
         }
 
         if (false === openssl_pkey_export($resource, $private)) {
+            // @codeCoverageIgnoreStart
             throw OpenSslException::lastError();
+            // @codeCoverageIgnoreEnd
         }
 
         if (false === ($details = openssl_pkey_get_details($resource))) {
+            // @codeCoverageIgnoreStart
             throw OpenSslException::lastError();
+            // @codeCoverageIgnoreEnd
         }
 
         $this->phar->setSignatureAlgorithm(Phar::OPENSSL, $private);
 
-        if (false === @file_put_contents(
-            $this->file . '.pubkey',
-            $details['key']
-        )){
+        if (false === @file_put_contents($this->file . '.pubkey', $details['key'])) {
             throw FileException::lastError();
         }
     }

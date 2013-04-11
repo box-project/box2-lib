@@ -2,7 +2,6 @@
 
 namespace Herrera\Box\Tests\Compactor;
 
-use Herrera\Box\Compactor\Compactor;
 use Herrera\PHPUnit\TestCase;
 
 class CompactorTest extends TestCase
@@ -24,12 +23,5 @@ class CompactorTest extends TestCase
     protected function setUp()
     {
         $this->compactor = new BaseCompactor();
-    }
-}
-
-class BaseCompactor extends Compactor
-{
-    public function compact($contents)
-    {
     }
 }
