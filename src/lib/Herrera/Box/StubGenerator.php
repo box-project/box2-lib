@@ -73,6 +73,13 @@ class StubGenerator
     private $rewrite;
 
     /**
+     * The shebang line.
+     *
+     * @var string
+     */
+    private $shebang = '#!/usr/bin/env php';
+
+    /**
      * Use Phar::webPhar() instead of Phar::mapPhar()?
      *
      * @var boolean
@@ -142,8 +149,8 @@ class StubGenerator
             return '\'' . addcslashes($arg, '\'') . '\'';
         };
 
-        $stub = <<<STUB
-#!/usr/bin/env php
+        $stub = $this->shebang . <<<STUB
+
 <?php
 
 /**
@@ -264,6 +271,20 @@ STUB;
     public function rewrite($function)
     {
         $this->rewrite = $function;
+
+        return $this;
+    }
+
+    /**
+     * Sets the shebang line.
+     *
+     * @param string $shebang The shebang line.
+     *
+     * @return StubGenerator The stub generator.
+     */
+    public function setShebang($shebang)
+    {
+        $this->shebang = $shebang;
 
         return $this;
     }
