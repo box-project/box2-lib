@@ -170,9 +170,9 @@ STUB
         );
     }
 
-    public function testSetShebang()
+    public function testShebang()
     {
-        $this->generator->setShebang('#!/bin/php');
+        $this->generator->shebang('#!/bin/php');
 
         $this->assertEquals(
             '#!/bin/php',

@@ -282,7 +282,7 @@ STUB;
      *
      * @return StubGenerator The stub generator.
      */
-    public function setShebang($shebang)
+    public function shebang($shebang)
     {
         $this->shebang = $shebang;
 
