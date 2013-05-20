@@ -23,6 +23,45 @@ class StubGeneratorTest extends TestCase
         );
     }
 
+    public function testBanner()
+    {
+        $this->generator->banner('Phar creation
+
+does work
+
+
+  indented');
+
+        $this->assertEquals(
+            'Phar creation
+
+does work
+
+
+  indented',
+            $this->getPropertyValue($this->generator, 'banner')
+        );
+
+        $this->assertEquals(
+            <<<STUB
+#!/usr/bin/env php
+<?php
+
+/**
+ * Phar creation
+ *
+ * does work
+ *
+ *
+ *   indented
+ */
+__HALT_COMPILER();
+STUB
+            ,
+            $this->generator->generate()
+        );
+    }
+
     public function testCreate()
     {
         $this->assertInstanceOf(
