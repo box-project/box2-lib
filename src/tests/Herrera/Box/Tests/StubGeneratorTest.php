@@ -209,6 +209,16 @@ STUB
         );
     }
 
+    public function testShebang()
+    {
+        $this->generator->shebang('#!/bin/php');
+
+        $this->assertEquals(
+            '#!/bin/php',
+            $this->getPropertyValue($this->generator, 'shebang')
+        );
+    }
+
     public function testWeb()
     {
         $this->generator->web(true);
