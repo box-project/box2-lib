@@ -8,6 +8,20 @@ namespace Herrera\Box
     use UnexpectedValueException;
 
     /**
+     * The default stub pattern.
+     *
+     * @var string
+     */
+    define('BOX_EXTRACT_PATTERN_DEFAULT', '__HALT' . '_COMPILER(); ?>');
+
+    /**
+     * The open-ended stub pattern.
+     *
+     * @var string
+     */
+    define('BOX_EXTRACT_PATTERN_OPEN', "__HALT" . "_COMPILER(); ?>\r\n");
+
+    /**
      * Extracts a phar without the extension.
      *
      * This class is a rewrite of the `Extract_Phar` class that is included
@@ -26,14 +40,14 @@ namespace Herrera\Box
          *
          * @var string
          */
-        const PATTERN_DEFAULT = "__HALT_COMPILER(); ?>";
+        const PATTERN_DEFAULT = BOX_EXTRACT_PATTERN_DEFAULT;
 
         /**
          * The open-ended stub pattern.
          *
          * @var string
          */
-        const PATTERN_OPEN = "__HALT_COMPILER(); ?>\r\n";
+        const PATTERN_OPEN = BOX_EXTRACT_PATTERN_OPEN;
 
         /**
          * The gzip compression flag.
