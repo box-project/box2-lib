@@ -40,6 +40,13 @@ class StubGenerator
 @link https://github.com/herrera-io/php-box/';
 
     /**
+     * Embed the Extract class in the stub?
+     *
+     * @var boolean
+     */
+    private $extract = false;
+
+    /**
      * The location within the Phar of index script.
      *
      * @var string
@@ -134,6 +141,20 @@ class StubGenerator
     }
 
     /**
+     * Embed the Extract class in the stub?
+     *
+     * @param boolean $extract Embed the class?
+     *
+     * @return StubGenerator The stub generator.
+     */
+    public function extract($extract)
+    {
+        $this->extract = $extract;
+
+        return $this;
+    }
+
+    /**
      * Sets location within the Phar of index script.
      *
      * @param string $index The index file.
@@ -168,68 +189,31 @@ class StubGenerator
      */
     public function generate()
     {
-        $arg = function ($arg) {
-            return '\'' . addcslashes($arg, '\'') . '\'';
-        };
+        $stub = array($this->shebang, '<?php');
 
-        $stub = $this->shebang . <<<STUB
-
-<?php
-
-STUB;
-
-        if ($this->banner !== null) {
-            $stub .= '
-/**
- * ' . str_replace(" \n", "\n", str_replace("\n", "\n * ", $this->banner)) . '
- */
-';
+        if (null !== $this->banner) {
+            $stub[] = $this->getBanner();
         }
 
         if ($this->alias) {
-            if ($this->web) {
-                $stub .= 'Phar::webPhar(' . $arg($this->alias);
-
-                if ($this->index) {
-                    $stub .= ', ' . $arg($this->index);
-
-                    if ($this->notFound) {
-                        $stub .= ', ' . $arg($this->notFound);
-
-                        if ($this->mimetypes) {
-                            $stub .= ', ' . var_export(
-                                $this->mimetypes,
-                                true
-                            );
-
-                            if ($this->rewrite) {
-                                $stub .= ', ' . $arg($this->rewrite);
-                            }
-                        }
-                    }
-                }
-
-                $stub .= ");\n";
-            } else {
-                $stub .= 'Phar::mapPhar(' . $arg($this->alias) . ");\n";
-            }
+            $stub[] = $this->getAlias();
         }
 
         if ($this->intercept) {
-            $stub .= "Phar::interceptFileFuncs();\n";
+            $stub[] = "Phar::interceptFileFuncs();";
         }
 
         if ($this->mung) {
-            $stub .= 'Phar::mungServer(' . var_export($this->mung, true) . ");\n";
+            $stub[] = 'Phar::mungServer(' . var_export($this->mung, true) . ");";
         }
 
         if ($this->index && (false === $this->web)) {
-            $stub .= "require 'phar://' . __FILE__ . '/{$this->index}';";
+            $stub[] = "require 'phar://' . __FILE__ . '/{$this->index}';";
         }
 
-        $stub .= "__HALT_COMPILER();";
+        $stub[] = "__HALT_COMPILER();";
 
-        return $stub;
+        return join("\n", $stub);
     }
 
     /**
@@ -326,5 +310,75 @@ STUB;
         $this->web = $web;
 
         return $this;
+    }
+
+    /**
+     * Escapes an argument so it can be written as a string in a call.
+     *
+     * @param string $arg The argument.
+     *
+     * @return string The escaped argument.
+     */
+    private function arg($arg)
+    {
+        return '\'' . addcslashes($arg, '\'') . '\'';
+    }
+
+    /**
+     * Returns the alias map.
+     *
+     * @return string The alias map.
+     */
+    private function getAlias()
+    {
+        $stub = '';
+
+        if ($this->web) {
+            $stub .= 'Phar::webPhar(' . $this->arg($this->alias);
+
+            if ($this->index) {
+                $stub .= ', ' . $this->arg($this->index);
+
+                if ($this->notFound) {
+                    $stub .= ', ' . $this->arg($this->notFound);
+
+                    if ($this->mimetypes) {
+                        $stub .= ', ' . var_export(
+                            $this->mimetypes,
+                            true
+                        );
+
+                        if ($this->rewrite) {
+                            $stub .= ', ' . $this->arg($this->rewrite);
+                        }
+                    }
+                }
+            }
+
+            $stub .= ');';
+        } else {
+            $stub .= 'Phar::mapPhar(' . $this->arg($this->alias) . ');';
+        }
+
+        return $stub;
+    }
+
+    /**
+     * Returns the banner after it has been processed.
+     *
+     * @return string The processed banner.
+     */
+    private function getBanner()
+    {
+        $banner = "/**\n * ";
+        $banner .= str_replace(
+            " \n",
+            "\n",
+            str_replace("\n", "\n * ", $this->banner)
+        );
+
+        $banner .= "\n */";
+
+        return $banner;
     }
 }
