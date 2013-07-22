@@ -2,6 +2,7 @@
 
 namespace Herrera\Box;
 
+use Herrera\Box\Compactor\Php;
 use Herrera\Box\Exception\InvalidArgumentException;
 
 /**
@@ -45,6 +46,13 @@ class StubGenerator
      * @var boolean
      */
     private $extract = false;
+
+    /**
+     * The processed extract code.
+     *
+     * @var array
+     */
+    private $extractCode = array();
 
     /**
      * The location within the Phar of index script.
@@ -151,6 +159,32 @@ class StubGenerator
     {
         $this->extract = $extract;
 
+        if ($extract) {
+            $this->extractCode = array(
+                'constants' => array(),
+                'class' => array(),
+            );
+
+            $compactor = new Php();
+            $code = file_get_contents(__DIR__ . '/Extract.php');
+            $code = $compactor->compact($code);
+            $code = preg_replace('/\n+/', "\n", $code);
+            $code = explode("\n", $code);
+            $code = array_slice($code, 2);
+
+            foreach ($code as $i => $line) {
+                if ((0 === strpos($line, 'use'))
+                    && (false === strpos($line, '\\'))
+                ) {
+                    unset($code[$i]);
+                } elseif (0 === strpos($line, 'define')) {
+                    $this->extractCode['constants'][] = $line;
+                } else {
+                    $this->extractCode['class'][] = $line;
+                }
+            }
+        }
+
         return $this;
     }
 
@@ -195,6 +229,11 @@ class StubGenerator
             $stub[] = $this->getBanner();
         }
 
+        if ($this->extract) {
+            $stub[] = join("\n", $this->extractCode['constants']);
+            $stub[] = 'if (class_exists(\'Phar\')) {';
+        }
+
         if ($this->alias) {
             $stub[] = $this->getAlias();
         }
@@ -209,6 +248,20 @@ class StubGenerator
 
         if ($this->index && (false === $this->web)) {
             $stub[] = "require 'phar://' . __FILE__ . '/{$this->index}';";
+        }
+
+        if ($this->extract) {
+            $stub[] = '} else {';
+            $stub[] = '$extract = new Extract(__FILE__, Extract::findStubLength(__FILE__));';
+            $stub[] = '$dir = $extract->go();';
+            $stub[] = 'set_include_path($dir . PATH_SEPARATOR . get_include_path());';
+
+            if ($this->index) {
+                $stub[] = "require \"\$dir/{$this->index}\";";
+            }
+
+            $stub[] = '}';
+            $stub[] = join("\n", $this->extractCode['class']);
         }
 
         $stub[] = "__HALT_COMPILER();";
