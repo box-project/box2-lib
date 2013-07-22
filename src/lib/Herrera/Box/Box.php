@@ -9,9 +9,11 @@ use Herrera\Box\Exception\InvalidArgumentException;
 use Herrera\Box\Exception\OpenSslException;
 use Herrera\Box\Exception\UnexpectedValueException;
 use Phar;
+use PharException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
+use RuntimeException;
 use SplFileInfo;
 use SplObjectStorage;
 use Traversable;
@@ -43,6 +45,19 @@ class Box
      * @var Phar
      */
     private $phar;
+
+    /**
+     * The available signature types.
+     *
+     * @var array
+     */
+    private static $types = array(
+        0x01 => array('MD5', 16),
+        0x02 => array('SHA1', 20),
+        0x03 => array('SHA256', 32),
+        0x04 => array('SHA512', 64),
+        0x10 => array('OpenSSL', null),
+    );
 
     /**
      * The placeholder values.
@@ -255,6 +270,71 @@ class Box
     }
 
     /**
+     * Returns the signature of the phar.
+     *
+     * This method does not use the extension to extract the phar's signature.
+     *
+     * @param string  $path The phar file path.
+     *
+     * @return array The signature.
+     *
+     * @throws PharException    If the phar is not valid.
+     * @throws RuntimeException If the file could not be read.
+     */
+    public static function getSignature($path)
+    {
+        $signature = array();
+
+        $raw = self::readEnd($path, -12, 12);
+
+        $flag = substr($raw, -4, 4);
+
+        $type = unpack('V', substr($raw, -8, 4));
+        $type = $type[1];
+
+        $size = unpack('V', substr($raw, 0, 4));
+        $size = $size[1];
+
+        if ('GBMB' === $flag) {
+            if (isset(self::$types[$type])) {
+                $signature['hash_type'] = self::$types[$type][0];
+
+                if (self::$types[$type][1]) {
+                    $size = self::$types[$type][1];
+                }
+
+                $signature['hash'] = self::readEnd(
+                    $path,
+                    self::$types[$type][1] ? -8 - $size : -12 - $size,
+                    $size
+                );
+
+                $signature['hash'] = unpack('H*', $signature['hash']);
+                $signature['hash'] = strtoupper($signature['hash'][1]);
+            } else {
+                throw new PharException(
+                    sprintf(
+                        'The signature type (%x) of "%s" is not recognized.',
+                        $type,
+                        $path
+                    )
+                );
+            }
+        } else {
+            if (ini_get('phar.require_hash')) {
+                throw new PharException(
+                    sprintf(
+                        'The phar "%s" is not signed.',
+                        $path
+                    )
+                );
+            }
+        }
+
+        return $signature;
+    }
+
+    /**
      * Replaces the placeholders with their values.
      *
      * @param string $contents The contents.
@@ -391,5 +471,60 @@ class Box
         }
 
         $this->sign($key, $password);
+    }
+
+    /**
+     * Reads from the end of a file.
+     *
+     * @param string  $file   The file handle.
+     * @param integer $offset The end offset.
+     * @param integer $bytes  The number of bytes to read.
+     *
+     * @return string The read bytes.
+     *
+     * @throws RuntimeException If the file could not be read.
+     */
+    private static function readEnd($file, $offset, $bytes)
+    {
+        if (false === ($size = @filesize($file))) {
+            $error = error_get_last();
+
+            throw new RuntimeException(
+                sprintf(
+                    'The size of the file "%s" could not be retrieved: %s',
+                    $file,
+                    $error['message']
+                )
+            );
+        }
+
+        $read = @file_get_contents($file, false, null, $size + $offset, $bytes);
+
+        if (false === $read) {
+            $error = error_get_last();
+
+            throw new RuntimeException(
+                sprintf(
+                    'The file "%s" could not be read at offset %d for %d bytes: %s',
+                    $file,
+                    $size + $offset,
+                    $bytes,
+                    $error['message']
+                )
+            );
+        }
+
+        if (($actual = strlen($read)) !== $bytes) {
+            throw new RuntimeException(
+                sprintf(
+                    'Could only read %d of %d bytes from "%s".',
+                    $actual,
+                    $bytes,
+                    $file
+                )
+            );
+        }
+
+        return $read;
     }
 }

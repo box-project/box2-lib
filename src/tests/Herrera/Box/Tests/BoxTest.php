@@ -60,6 +60,37 @@ KEY
         );
     }
 
+    public function getSignatures()
+    {
+        return array(
+            array(
+                RES_DIR . '/md5.phar',
+                'MD5',
+                '6772FC5AB8AB8D72BB69B6A0C323C796'
+            ),
+            array(
+                RES_DIR . '/sha1.phar',
+                'SHA1',
+                'A158DF4720C619E84A777982402B5D32394805E5'
+            ),
+            array(
+                RES_DIR . '/sha256.phar',
+                'SHA256',
+                'D0A6AB31437CA8485779E7603670ABDE05C911EA7FCEC051B8D3FB14A1480B7D'
+            ),
+            array(
+                RES_DIR . '/sha512.phar',
+                'SHA512',
+                'B4CAE177138A773283A748C8770A7142F0CC36D6EE88E37900BCF09A92D840D237CE3F3B47C2C7B39AC2D2C0F9A16D63FE70E1A455723DD36840B6E2E64E2130'
+            ),
+            array(
+                RES_DIR . '/openssl.phar',
+                'OpenSSL',
+                '54AF1D4E5459D3A77B692E46FDB9C965D1C7579BD1F2AD2BECF4973677575444FE21E104B7655BA3D088090C28DF63D14876B277C423C8BFBCDB9E3E63F9D61A'
+            ),
+        );
+    }
+
     public function testAddCompactor()
     {
         $compactor = new Compactor();
@@ -317,6 +348,46 @@ SOURCE;
     public function testGetPhar()
     {
         $this->assertSame($this->phar, $this->box->getPhar());
+    }
+
+    /**
+     * @dataProvider getSignatures
+     */
+    public function testGetSignature($file, $type, $hash)
+    {
+        $signature = Box::getSignature($file);
+
+        $this->assertEquals(
+            array(
+                'hash_type' => $type,
+                'hash' => $hash,
+            ),
+            $signature
+        );
+    }
+
+    public function testGetSignatureInvalid()
+    {
+        $path = RES_DIR . '/invalid.phar';
+
+        $this->setExpectedException(
+            'PharException',
+            "The signature type (ffffffff) of \"$path\" is not recognized."
+        );
+
+        Box::getSignature($path);
+    }
+
+    public function testGetSignatureMissing()
+    {
+        $path = RES_DIR . '/missing.phar';
+
+        $this->setExpectedException(
+            'PharException',
+            "The phar \"$path\" is not signed."
+        );
+
+        Box::getSignature($path);
     }
 
     public function testReplaceValues()
