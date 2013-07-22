@@ -69,6 +69,18 @@ STUB
         );
     }
 
+    public function testExtract()
+    {
+        $this->generator->extract(true);
+
+        $this->assertTrue(
+            $this->getPropertyValue(
+                $this->generator,
+                'extract'
+            )
+        );
+    }
+
     public function testIndex()
     {
         $this->generator->index('index.php');
