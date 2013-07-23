@@ -4,6 +4,7 @@ namespace Herrera\Box;
 
 use Herrera\Box\Exception\Exception;
 use Herrera\Box\Exception\FileException;
+use Herrera\Box\Exception\OpenSslException;
 use PharException;
 
 /**
@@ -50,17 +51,17 @@ class Signature
             'size' => 16
         ),
         array(
-            'name' => 'SHA1',
+            'name' => 'SHA-1',
             'flag' => 0x02,
             'size' => 20
         ),
         array(
-            'name' => 'SHA256',
+            'name' => 'SHA-256',
             'flag' => 0x03,
             'size' => 32
         ),
         array(
-            'name' => 'SHA512',
+            'name' => 'SHA-512',
             'flag' => 0x04,
             'size' => 64
         ),
@@ -198,6 +199,10 @@ class Signature
      * Verifies the signature of the phar.
      *
      * @return boolean TRUE if verified, FALSE if not.
+     *
+     * @throws Exception
+     * @throws FileException    If the private key could not be read.
+     * @throws OpenSslException If there is an OpenSSL error.
      */
     public function verify()
     {
@@ -227,24 +232,67 @@ class Signature
         $this->seek(0);
 
         if (0x10 === $type['flag']) {
-            //
-        } else {
-            $context = hash_init(strtolower($signature['hash_type']));
-            $buffer = 64;
+            if (!extension_loaded('openssl')) {
+                throw OpenSslException::create(
+                    'The "openssl" extension is required to verify signatures using a public key.'
+                );
+            }
+            $file = $this->file . '.pubkey';
 
-            while (0 < $size) {
-                if ($size < $buffer) {
-                    $buffer = $size;
-                    $size = 0;
-                }
-
-                hash_update($context, $this->read($buffer));
-
-                $size -= $buffer;
+            if (false === ($key = @file_get_contents($file))) {
+                throw FileException::lastError();
             }
 
-            $hash = strtoupper(hash_final($context));
+            /*
+             * At the moment, there doesn't seem to be an efficient way of
+             * generating a progressive hash without resorting to using both
+             * "openssl" and "phar" extensions.
+             */
+            OpenSslException::reset();
+
+            ob_start();
+
+            $result = openssl_verify(
+                $this->read($size),
+                pack('H*', $signature['hash']),
+                $key
+            );
+
+            $error = trim(ob_get_clean());
+
+            if (-1 === $result) {
+                throw OpenSslException::lastError();
+            } elseif (!empty($error)) {
+                throw new OpenSslException($error);
+            }
+
+            return (1 === $result);
         }
+
+        $context = @hash_init(
+            strtolower(
+                preg_replace('/\-/', '', $signature['hash_type'])
+            )
+        );
+
+        if (false === $context) {
+            throw Exception::lastError();
+        }
+
+        $buffer = 64;
+
+        while (0 < $size) {
+            if ($size < $buffer) {
+                $buffer = $size;
+                $size = 0;
+            }
+
+            hash_update($context, $this->read($buffer));
+
+            $size -= $buffer;
+        }
+
+        $hash = strtoupper(hash_final($context));
 
         return ($signature['hash'] === $hash);
     }
