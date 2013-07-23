@@ -22,7 +22,11 @@
     "require-dev": {
         "herrera-io/phpunit-test-case": "1.*",
         "mikey179/vfsStream": "1.1.0",
-        "phpunit/phpunit": "3.7.*"
+        "phpunit/phpunit": "3.7.*",
+        "phpseclib/phpseclib": "~0.3"
+    },
+    "suggest": {
+        "phpseclib/phpseclib": "For verifying OpenSSL signed phars without the phar extension."
     },
     "autoload": {
         "psr-0": {
