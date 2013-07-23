@@ -277,61 +277,10 @@ class Box
      * @param string  $path The phar file path.
      *
      * @return array The signature.
-     *
-     * @throws PharException    If the phar is not valid.
-     * @throws RuntimeException If the file could not be read.
      */
     public static function getSignature($path)
     {
-        $signature = array();
-
-        $raw = self::readEnd($path, -12, 12);
-
-        $flag = substr($raw, -4, 4);
-
-        $type = unpack('V', substr($raw, -8, 4));
-        $type = $type[1];
-
-        $size = unpack('V', substr($raw, 0, 4));
-        $size = $size[1];
-
-        if ('GBMB' === $flag) {
-            if (isset(self::$types[$type])) {
-                $signature['hash_type'] = self::$types[$type][0];
-
-                if (self::$types[$type][1]) {
-                    $size = self::$types[$type][1];
-                }
-
-                $signature['hash'] = self::readEnd(
-                    $path,
-                    self::$types[$type][1] ? -8 - $size : -12 - $size,
-                    $size
-                );
-
-                $signature['hash'] = unpack('H*', $signature['hash']);
-                $signature['hash'] = strtoupper($signature['hash'][1]);
-            } else {
-                throw new PharException(
-                    sprintf(
-                        'The signature type (%x) of "%s" is not recognized.',
-                        $type,
-                        $path
-                    )
-                );
-            }
-        } else {
-            if (ini_get('phar.require_hash')) {
-                throw new PharException(
-                    sprintf(
-                        'The phar "%s" is not signed.',
-                        $path
-                    )
-                );
-            }
-        }
-
-        return $signature;
+        return Signature::create($path)->get();
     }
 
     /**
@@ -471,60 +420,5 @@ class Box
         }
 
         $this->sign($key, $password);
-    }
-
-    /**
-     * Reads from the end of a file.
-     *
-     * @param string  $file   The file handle.
-     * @param integer $offset The end offset.
-     * @param integer $bytes  The number of bytes to read.
-     *
-     * @return string The read bytes.
-     *
-     * @throws RuntimeException If the file could not be read.
-     */
-    private static function readEnd($file, $offset, $bytes)
-    {
-        if (false === ($size = @filesize($file))) {
-            $error = error_get_last();
-
-            throw new RuntimeException(
-                sprintf(
-                    'The size of the file "%s" could not be retrieved: %s',
-                    $file,
-                    $error['message']
-                )
-            );
-        }
-
-        $read = @file_get_contents($file, false, null, $size + $offset, $bytes);
-
-        if (false === $read) {
-            $error = error_get_last();
-
-            throw new RuntimeException(
-                sprintf(
-                    'The file "%s" could not be read at offset %d for %d bytes: %s',
-                    $file,
-                    $size + $offset,
-                    $bytes,
-                    $error['message']
-                )
-            );
-        }
-
-        if (($actual = strlen($read)) !== $bytes) {
-            throw new RuntimeException(
-                sprintf(
-                    'Could only read %d of %d bytes from "%s".',
-                    $actual,
-                    $bytes,
-                    $file
-                )
-            );
-        }
-
-        return $read;
     }
 }

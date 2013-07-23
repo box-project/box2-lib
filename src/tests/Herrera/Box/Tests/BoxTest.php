@@ -366,30 +366,6 @@ SOURCE;
         );
     }
 
-    public function testGetSignatureInvalid()
-    {
-        $path = RES_DIR . '/invalid.phar';
-
-        $this->setExpectedException(
-            'PharException',
-            "The signature type (ffffffff) of \"$path\" is not recognized."
-        );
-
-        Box::getSignature($path);
-    }
-
-    public function testGetSignatureMissing()
-    {
-        $path = RES_DIR . '/missing.phar';
-
-        $this->setExpectedException(
-            'PharException',
-            "The phar \"$path\" is not signed."
-        );
-
-        Box::getSignature($path);
-    }
-
     public function testReplaceValues()
     {
         $this->setPropertyValue(
