@@ -10,6 +10,8 @@ use Phar;
 
 class SignatureTest extends TestCase
 {
+    private $types;
+
     public function getPhars()
     {
         return array(
@@ -114,36 +116,77 @@ class SignatureTest extends TestCase
         $this->assertTrue($sig->verify());
     }
 
-    public function testVerifyMissingKey()
+    // private methods
+
+    public function testHandle()
     {
-        $dir = $this->createDir();
+        $sig = new Signature(__FILE__);
 
-        copy(RES_DIR . '/openssl.phar', "$dir/openssl.phar");
-
-        $sig = new Signature("$dir/openssl.phar");
+        $this->setPropertyValue($sig, 'file', '/does/not/exist');
 
         $this->setExpectedException(
             'Herrera\\Box\\Exception\\FileException',
             'No such file or directory'
         );
 
-        $sig->verify();
+        $this->callMethod($sig, 'handle');
     }
 
-    public function testVerifyErrorHandlingBug()
+    public function testRead()
     {
-        $dir = $this->createDir();
+        $sig = new Signature(__FILE__);
 
-        copy(RES_DIR . '/openssl.phar', "$dir/openssl.phar");
-        touch("$dir/openssl.phar.pubkey");
-
-        $sig = new Signature("$dir/openssl.phar");
+        $this->setPropertyValue($sig, 'handle', true);
 
         $this->setExpectedException(
-            'Herrera\\Box\\Exception\\OpenSslException',
-            'cannot be coerced'
+            'Herrera\\Box\\Exception\\FileException',
+            'boolean given'
         );
 
-        $sig->verify();
+        $this->callMethod($sig, 'read', array(123));
+    }
+
+    public function testReadShort()
+    {
+        $file = $this->createFile();
+        $sig = new Signature($file);
+
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException',
+            "Only read 0 of 1 bytes from \"$file\"."
+        );
+
+        $this->callMethod($sig, 'read', array(1));
+    }
+
+    public function testSeek()
+    {
+        $file = $this->createFile();
+        $sig = new Signature($file);
+
+        $this->setExpectedException(
+            'Herrera\\Box\\Exception\\FileException'
+        );
+
+        $this->callMethod($sig, 'seek', array(-1));
+    }
+
+    protected function setUp()
+    {
+        $this->types = $this->getPropertyValue(
+            'Herrera\\Box\\Signature',
+            'types'
+        );
+    }
+
+    protected function tearDown()
+    {
+        $this->setPropertyValue(
+            'Herrera\\Box\\Signature',
+            'types',
+            $this->types
+        );
+
+        parent::tearDown();
     }
 }

@@ -5,6 +5,7 @@ namespace Herrera\Box;
 use Herrera\Box\Exception\Exception;
 use Herrera\Box\Exception\FileException;
 use Herrera\Box\Exception\OpenSslException;
+use Herrera\Box\Signature\VerifyInterface;
 use PharException;
 
 /**
@@ -48,27 +49,32 @@ class Signature
         array(
             'name' => 'MD5',
             'flag' => 0x01,
-            'size' => 16
+            'size' => 16,
+            'class' => 'Herrera\\Box\\Signature\\Hash'
         ),
         array(
             'name' => 'SHA-1',
             'flag' => 0x02,
-            'size' => 20
+            'size' => 20,
+            'class' => 'Herrera\\Box\\Signature\\Hash'
         ),
         array(
             'name' => 'SHA-256',
             'flag' => 0x03,
-            'size' => 32
+            'size' => 32,
+            'class' => 'Herrera\\Box\\Signature\\Hash'
         ),
         array(
             'name' => 'SHA-512',
             'flag' => 0x04,
-            'size' => 64
+            'size' => 64,
+            'class' => 'Herrera\\Box\\Signature\\Hash'
         ),
         array(
             'name' => 'OpenSSL',
             'flag' => 0x10,
-            'size' => null
+            'size' => null,
+            'class' => 'Herrera\\Box\\Signature\\PublicKeyDelegate'
         ),
     );
 
@@ -147,7 +153,7 @@ class Signature
                 );
             }
 
-            return;
+            return null;
         }
 
         $this->seek(-8, SEEK_END);
@@ -231,53 +237,9 @@ class Signature
 
         $this->seek(0);
 
-        if (0x10 === $type['flag']) {
-            if (!extension_loaded('openssl')) {
-                throw OpenSslException::create(
-                    'The "openssl" extension is required to verify signatures using a public key.'
-                );
-            }
-            $file = $this->file . '.pubkey';
-
-            if (false === ($key = @file_get_contents($file))) {
-                throw FileException::lastError();
-            }
-
-            /*
-             * At the moment, there doesn't seem to be an efficient way of
-             * generating a progressive hash without resorting to using both
-             * "openssl" and "phar" extensions.
-             */
-            OpenSslException::reset();
-
-            ob_start();
-
-            $result = openssl_verify(
-                $this->read($size),
-                pack('H*', $signature['hash']),
-                $key
-            );
-
-            $error = trim(ob_get_clean());
-
-            if (-1 === $result) {
-                throw OpenSslException::lastError();
-            } elseif (!empty($error)) {
-                throw new OpenSslException($error);
-            }
-
-            return (1 === $result);
-        }
-
-        $context = @hash_init(
-            strtolower(
-                preg_replace('/\-/', '', $signature['hash_type'])
-            )
-        );
-
-        if (false === $context) {
-            throw Exception::lastError();
-        }
+        /** @var $verify VerifyInterface */
+        $verify = new $type['class']();
+        $verify->init($type['name'], $this->file);
 
         $buffer = 64;
 
@@ -287,14 +249,12 @@ class Signature
                 $size = 0;
             }
 
-            hash_update($context, $this->read($buffer));
+            $verify->update($this->read($buffer));
 
             $size -= $buffer;
         }
 
-        $hash = strtoupper(hash_final($context));
-
-        return ($signature['hash'] === $hash);
+        return $verify->verify($signature['hash']);
     }
 
     /**
@@ -303,7 +263,7 @@ class Signature
     private function close()
     {
         if ($this->handle) {
-            fclose($this->handle);
+            @fclose($this->handle);
 
             $this->handle = null;
         }
@@ -342,7 +302,7 @@ class Signature
      */
     private function read($bytes)
     {
-        if (false === ($read = fread($this->handle(), $bytes))) {
+        if (false === ($read = @fread($this->handle(), $bytes))) {
             throw FileException::lastError();
         }
 
