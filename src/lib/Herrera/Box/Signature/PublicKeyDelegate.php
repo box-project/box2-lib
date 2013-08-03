@@ -26,7 +26,7 @@ class PublicKeyDelegate implements VerifyInterface
         if (extension_loaded('openssl')) {
             $this->hash = new OpenSsl();
         } elseif (class_exists('Crypt_RSA')) {
-            $this->hsah = new PhpSeclib();
+            $this->hash = new PhpSeclib();
         } else {
             throw SignatureException::create(
                 'The "openssl" extension and "phpseclib" libraries are not available.'
