@@ -9,11 +9,9 @@ use Herrera\Box\Exception\InvalidArgumentException;
 use Herrera\Box\Exception\OpenSslException;
 use Herrera\Box\Exception\UnexpectedValueException;
 use Phar;
-use PharException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
-use RuntimeException;
 use SplFileInfo;
 use SplObjectStorage;
 use Traversable;
@@ -45,19 +43,6 @@ class Box
      * @var Phar
      */
     private $phar;
-
-    /**
-     * The available signature types.
-     *
-     * @var array
-     */
-    private static $types = array(
-        0x01 => array('MD5', 16),
-        0x02 => array('SHA1', 20),
-        0x03 => array('SHA256', 32),
-        0x04 => array('SHA512', 64),
-        0x10 => array('OpenSSL', null),
-    );
 
     /**
      * The placeholder values.
