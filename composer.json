@@ -27,7 +27,7 @@
         "phpseclib/phpseclib": "~0.3"
     },
     "suggest": {
-        "herrera-io/annotations": "For preserving and compacting annotations.",
+        "herrera-io/annotations": "For compacting annotated docblocks.",
         "phpseclib/phpseclib": "For verifying OpenSSL signed phars without the phar extension."
     },
     "autoload": {
