@@ -145,8 +145,7 @@ class Extract
     public static function findStubLength(
         $file,
         $pattern = self::PATTERN_OPEN
-    )
-    {
+    ) {
         if (!($fp = fopen($file, 'rb'))) {
             throw new RuntimeException(
                 sprintf(
