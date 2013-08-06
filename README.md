@@ -155,7 +155,45 @@ $example->setExtensions(
 
 #### Bundled Compactors
 
-?
+The library has two compactors bundled for your convenience.
+
+##### Compacting JSON
+
+The `JSON` compactor is very simple to use as there are no options to
+configure. However, the `json` extension is required to use it. All extra
+whitespace is removed from `.json` files.
+
+```php
+use Herrera\Box\Compactor\Json;
+
+$compactor = new Json();
+```
+
+##### Compacting PHP
+
+The `PHP` compactor will strip all comments whitespace from `.php` files.
+Comments that are removed will be removed with an the same number of line
+breaks as the original comment. This is done in order to preserve the line
+number that is reported when errors occur in the phar.
+
+```php
+use Herrera\Box\Compactor\Php;
+
+$compactor = new Php();
+```
+
+If you make use of Doctrine formatted annotations, you can also make use
+of a special feature within the `Php` compactor. To compact comments and
+preserve annotations, you will need to install the [`herrera-io/annotations`][]
+library and create an instance of `Tokenizer`.
+
+```php
+use Herrera\Annotations\Tokenizer;
+
+$compactor->setTokenizer(new Tokenizer());
+```
+
+Both line count and annotation data is preserved.
 
 ### Managing Signatures
 
@@ -456,3 +494,4 @@ $box->signUsingFile($file, $pass);
 [Build Status]: https://travis-ci.org/herrera-io/php-box.png?branch=master
 [`Phar`]: http://us3.php.net/manual/en/class.phar.php
 [`CompactorInterface`]: src/lib/Herrera/Box/Compactor/CompactorInterface.php
+[`herrera-io/annotations`]: https://github.com/herrera-io/php-annotations
