@@ -56,7 +56,10 @@ EXPECTED;
 
     public function testConvertWithAnnotations()
     {
-        $this->php->setTokenizer(new Tokenizer());
+        $tokenizer = new Tokenizer();
+        $tokenizer->ignore(array('ignored'));
+
+        $this->php->setTokenizer($tokenizer);
 
         $original = <<<ORIGINAL
 <?php
@@ -93,6 +96,11 @@ class Test
      * )
      */
     private \$foreign;
+
+    /**
+     * @ignored
+     */
+    private \$none;
 }
 ORIGINAL;
 
@@ -132,6 +140,11 @@ private \$id;
 *
 */
 private \$foreign;
+
+
+
+
+private \$none;
 }
 EXPECTED;
 

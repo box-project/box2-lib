@@ -96,6 +96,10 @@ class Php extends Compactor
         $inside = 0;
         $tokens = $this->tokenizer->parse($docblock);
 
+        if (empty($tokens)) {
+            return str_repeat("\n", substr_count($docblock, "\n"));
+        }
+
         foreach ($tokens as $token) {
             if ((0 === $inside) && (DocLexer::T_AT === $token[0])) {
                 $index++;
