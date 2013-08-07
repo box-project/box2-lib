@@ -474,19 +474,11 @@ class Extract
      */
     private function read($bytes)
     {
-        $buffer = 8192;
-        $limit = $bytes;
         $read = '';
+        $total = $bytes;
 
-        while (0 < $limit) {
-            if ($buffer > $limit) {
-                $buffer = $limit;
-                $limit = 0;
-            } else {
-                $limit -= $buffer;
-            }
-
-            if (false === ($read = fread($this->handle, $buffer))) {
+        while (!feof($this->handle) && $bytes) {
+            if (false === ($chunk = fread($this->handle, $bytes))) {
                 throw new RuntimeException(
                     sprintf(
                         'Could not read %d bytes from "%s".',
@@ -495,14 +487,17 @@ class Extract
                     )
                 );
             }
+
+            $read .= $chunk;
+            $bytes -= strlen($chunk);
         }
 
-        if (($actual = strlen($read)) !== $bytes) {
+        if (($actual = strlen($read)) !== $total) {
             throw new RuntimeException(
                 sprintf(
                     'Only read %d of %d in "%s".',
                     $actual,
-                    $bytes,
+                    $total,
                     $this->file
                 )
             );
