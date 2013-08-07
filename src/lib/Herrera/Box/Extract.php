@@ -214,6 +214,13 @@ class Extract
             $dir = realpath($dir);
         }
 
+        // skip if already extracted
+        $md5 = $dir . DIRECTORY_SEPARATOR . md5_file($this->file);
+
+        if (file_exists($md5)) {
+            return $dir;
+        }
+
         if (!is_dir($dir)) {
             $this->createDir($dir);
         }
@@ -252,30 +259,25 @@ class Extract
             }
         }
 
-        // extract, if necessary
-        $md5 = $dir . DIRECTORY_SEPARATOR . md5_file($this->file);
+        self::purge($dir);
+        $this->createDir($dir);
+        $this->createFile($md5);
 
-        if (!file_exists($md5)) {
-            self::purge($dir);
-            $this->createDir($dir);
-            $this->createFile($md5);
+        foreach ($info['files'] as $info) {
+            $path = $dir . DIRECTORY_SEPARATOR . $info['path'];
+            $parent = dirname($path);
 
-            foreach ($info['files'] as $info) {
-                $path = $dir . DIRECTORY_SEPARATOR . $info['path'];
-                $parent = dirname($path);
+            if (!is_dir($parent)) {
+                $this->createDir($parent);
+            }
 
-                if (!is_dir($parent)) {
-                    $this->createDir($parent);
-                }
-
-                if (preg_match('{/$}', $info['path'])) {
-                    $this->createDir($path, 0777, false);
-                } else {
-                    $this->createFile(
-                        $path,
-                        $this->extractFile($info)
-                    );
-                }
+            if (preg_match('{/$}', $info['path'])) {
+                $this->createDir($path, 0777, false);
+            } else {
+                $this->createFile(
+                    $path,
+                    $this->extractFile($info)
+                );
             }
         }
 
