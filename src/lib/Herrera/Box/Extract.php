@@ -476,8 +476,9 @@ class Extract
     {
         $read = '';
 
-        while ($bytes) {
-            if (false === ($chunk = fread($this->handle, $bytes))) {
+        while ($bytes > 0) {
+            $chunk = fread($this->handle, $bytes);
+            if (false === $chunk || '' === $chunk) {
                 throw new RuntimeException(
                     sprintf(
                         'Could not read %d bytes from "%s".',
