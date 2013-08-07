@@ -468,14 +468,27 @@ class Extract
      */
     private function read($bytes)
     {
-        if (false === ($read = fread($this->handle, $bytes))) {
-            throw new RuntimeException(
-                sprintf(
-                    'Could not read %d bytes from "%s".',
-                    $bytes,
-                    $this->file
-                )
-            );
+        $buffer = 8192;
+        $limit = $bytes;
+        $read = '';
+
+        while (0 < $limit) {
+            if ($buffer > $limit) {
+                $buffer = $limit;
+                $limit = 0;
+            } else {
+                $limit -= $buffer;
+            }
+
+            if (false === ($read = fread($this->handle, $buffer))) {
+                throw new RuntimeException(
+                    sprintf(
+                        'Could not read %d bytes from "%s".',
+                        $bytes,
+                        $this->file
+                    )
+                );
+            }
         }
 
         if (($actual = strlen($read)) !== $bytes) {
