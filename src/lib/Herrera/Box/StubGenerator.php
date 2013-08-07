@@ -234,9 +234,7 @@ class StubGenerator
             $stub[] = 'if (class_exists(\'Phar\')) {';
         }
 
-        if ($this->alias) {
-            $stub[] = $this->getAlias();
-        }
+        $stub[] = $this->getAlias();
 
         if ($this->intercept) {
             $stub[] = "Phar::interceptFileFuncs();";
