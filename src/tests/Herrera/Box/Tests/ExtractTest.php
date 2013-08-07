@@ -149,6 +149,24 @@ class ExtractTest extends TestCase
         $extract->go();
     }
 
+    /**
+     * Issue #7
+     *
+     * Files with no content would trigger an exception when extracted.
+     */
+    public function testGoEmptyFile()
+    {
+        $path = RES_DIR . '/empty.phar';
+
+        $extract = new Extract($path, Extract::findStubLength($path));
+
+        $dir = $extract->go();
+
+        $this->assertFileExists($dir . '/empty.php');
+
+        $this->assertEquals('', file_get_contents($dir . '/empty.php'));
+    }
+
     public function testPurge()
     {
         $dir = $this->createDir();
