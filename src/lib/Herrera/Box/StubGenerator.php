@@ -55,6 +55,13 @@ class StubGenerator
     private $extractCode = array();
 
     /**
+     * Force the use of the Extract class?
+     *
+     * @var boolean
+     */
+    private $extractForce = false;
+
+    /**
      * The location within the Phar of index script.
      *
      * @var string
@@ -152,12 +159,14 @@ class StubGenerator
      * Embed the Extract class in the stub?
      *
      * @param boolean $extract Embed the class?
+     * @param boolean $force   Force the use of the class?
      *
      * @return StubGenerator The stub generator.
      */
-    public function extract($extract)
+    public function extract($extract, $force = false)
     {
         $this->extract = $extract;
+        $this->extractForce = $force;
 
         if ($extract) {
             $this->extractCode = array(
@@ -231,34 +240,33 @@ class StubGenerator
 
         if ($this->extract) {
             $stub[] = join("\n", $this->extractCode['constants']);
-            $stub[] = 'if (class_exists(\'Phar\')) {';
+
+            if ($this->extractForce) {
+                $stub = array_merge($stub, $this->getExtractSections());
+            }
         }
 
-        $stub[] = $this->getAlias();
-
-        if ($this->intercept) {
-            $stub[] = "Phar::interceptFileFuncs();";
-        }
-
-        if ($this->mung) {
-            $stub[] = 'Phar::mungServer(' . var_export($this->mung, true) . ");";
-        }
-
-        if ($this->index && (false === $this->web)) {
-            $stub[] = "require 'phar://' . __FILE__ . '/{$this->index}';";
-        }
+        $stub = array_merge($stub, $this->getPharSections());
 
         if ($this->extract) {
-            $stub[] = '} else {';
-            $stub[] = '$extract = new Extract(__FILE__, Extract::findStubLength(__FILE__));';
-            $stub[] = '$dir = $extract->go();';
-            $stub[] = 'set_include_path($dir . PATH_SEPARATOR . get_include_path());';
+            if ($this->extractForce) {
+                if ($this->index && !$this->web) {
+                    $stub[] = "require \"\$dir/{$this->index}\";";
+                }
+            } else {
+                end($stub);
 
-            if ($this->index) {
-                $stub[] = "require \"\$dir/{$this->index}\";";
+                $stub[key($stub)] .= ' else {';
+
+                $stub = array_merge($stub, $this->getExtractSections());
+
+                if ($this->index) {
+                    $stub[] = "require \"\$dir/{$this->index}\";";
+                }
+
+                $stub[] = '}';
             }
 
-            $stub[] = '}';
             $stub[] = join("\n", $this->extractCode['class']);
         }
 
@@ -366,13 +374,14 @@ class StubGenerator
     /**
      * Escapes an argument so it can be written as a string in a call.
      *
-     * @param string $arg The argument.
+     * @param string $arg   The argument.
+     * @param string $quote The quote.
      *
      * @return string The escaped argument.
      */
-    private function arg($arg)
+    private function arg($arg, $quote = "'")
     {
-        return '\'' . addcslashes($arg, '\'') . '\'';
+        return $quote . addcslashes($arg, $quote) . $quote;
     }
 
     /**
@@ -383,15 +392,20 @@ class StubGenerator
     private function getAlias()
     {
         $stub = '';
+        $prefix = '';
+
+        if ($this->extractForce) {
+            $prefix = '$dir/';
+        }
 
         if ($this->web) {
             $stub .= 'Phar::webPhar(' . $this->arg($this->alias);
 
             if ($this->index) {
-                $stub .= ', ' . $this->arg($this->index);
+                $stub .= ', ' . $this->arg($prefix . $this->index, '"');
 
                 if ($this->notFound) {
-                    $stub .= ', ' . $this->arg($this->notFound);
+                    $stub .= ', ' . $this->arg($prefix . $this->notFound, '"');
 
                     if ($this->mimetypes) {
                         $stub .= ', ' . var_export(
@@ -431,5 +445,48 @@ class StubGenerator
         $banner .= "\n */";
 
         return $banner;
+    }
+
+    /**
+     * Returns the self extracting sections of the stub.
+     *
+     * @return array The stub sections.
+     */
+    private function getExtractSections()
+    {
+        return array(
+            '$extract = new Extract(__FILE__, Extract::findStubLength(__FILE__));',
+            '$dir = $extract->go();',
+            'set_include_path($dir . PATH_SEPARATOR . get_include_path());',
+        );
+    }
+
+    /**
+     * Returns the sections of the stub that use the Phar class.
+     *
+     * @return array The stub sections.
+     */
+    private function getPharSections()
+    {
+        $stub = array(
+            'if (class_exists(\'Phar\')) {',
+            $this->getAlias(),
+        );
+
+        if ($this->intercept) {
+            $stub[] = "Phar::interceptFileFuncs();";
+        }
+
+        if ($this->mung) {
+            $stub[] = 'Phar::mungServer(' . var_export($this->mung, true) . ");";
+        }
+
+        if ($this->index && !$this->web && !$this->extractForce) {
+            $stub[] = "require 'phar://' . __FILE__ . '/{$this->index}';";
+        }
+
+        $stub[] = '}';
+
+        return $stub;
     }
 }
