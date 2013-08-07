@@ -387,10 +387,6 @@ class Extract
      */
     private function extractFile($info)
     {
-        if (0 === $info['size']) {
-            return '';
-        }
-
         $data = $this->read($info['compressed_size']);
 
         if ($info['flags'] & self::GZ) {
@@ -451,7 +447,7 @@ class Extract
      */
     private function open()
     {
-        if (null === ($this->handle = fopen($this->file, 'rb'))) {
+        if (false === ($this->handle = fopen($this->file, 'rb'))) {
             $this->handle = null;
 
             throw new RuntimeException(
@@ -474,19 +470,11 @@ class Extract
      */
     private function read($bytes)
     {
-        $buffer = 8192;
-        $limit = $bytes;
         $read = '';
 
-        while (0 < $limit) {
-            if ($buffer > $limit) {
-                $buffer = $limit;
-                $limit = 0;
-            } else {
-                $limit -= $buffer;
-            }
-
-            if (false === ($read = fread($this->handle, $buffer))) {
+        while ($bytes > 0) {
+            $chunk = fread($this->handle, $bytes);
+            if (false === $chunk || '' === $chunk) {
                 throw new RuntimeException(
                     sprintf(
                         'Could not read %d bytes from "%s".',
@@ -495,17 +483,9 @@ class Extract
                     )
                 );
             }
-        }
 
-        if (($actual = strlen($read)) !== $bytes) {
-            throw new RuntimeException(
-                sprintf(
-                    'Only read %d of %d in "%s".',
-                    $actual,
-                    $bytes,
-                    $this->file
-                )
-            );
+            $read  .= $chunk;
+            $bytes -= strlen($chunk);
         }
 
         return $read;
