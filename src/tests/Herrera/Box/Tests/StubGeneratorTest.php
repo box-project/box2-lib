@@ -55,6 +55,7 @@ does work
  *
  *   indented
  */
+Phar::mapPhar('');
 __HALT_COMPILER();
 STUB
             ,
