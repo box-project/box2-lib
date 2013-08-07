@@ -447,7 +447,7 @@ class Extract
      */
     private function open()
     {
-        if (null === ($this->handle = fopen($this->file, 'rb'))) {
+        if (false === ($this->handle = fopen($this->file, 'rb'))) {
             $this->handle = null;
 
             throw new RuntimeException(
