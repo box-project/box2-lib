@@ -385,6 +385,10 @@ class Extract
      */
     private function extractFile($info)
     {
+        if (0 === $info['size']) {
+            return '';
+        }
+
         $data = $this->read($info['compressed_size']);
 
         if ($info['flags'] & self::GZ) {
