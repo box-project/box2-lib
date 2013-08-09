@@ -109,35 +109,35 @@ ORIGINAL;
 <?php
 
 /**
-*@Entity()
-*@Table(name="test")
-*
-*
+@Entity()
+@Table(name="test")
+
+
 */
 class Test
 {
 /**
-*@ORM\Column(type="integer")
-*@ORM\GeneratedValue()
-*@ORM\Id()
-*
-*
+@ORM\Column(type="integer")
+@ORM\GeneratedValue()
+@ORM\Id()
+
+
 */
 private \$id;
 
 /**
-*@ORM\ManyToMany(targetEntity="SomethingElse")
-*@ORM\JoinTable(name="aJoinTable",joinColumns={@ORM\JoinColumn(name="joined",referencedColumnName="foreign")},inverseJoinColumns={@ORM\JoinColumn(name="foreign",referencedColumnName="joined")})
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
+@ORM\ManyToMany(targetEntity="SomethingElse")
+@ORM\JoinTable(name="aJoinTable",joinColumns={@ORM\JoinColumn(name="joined",referencedColumnName="foreign")},inverseJoinColumns={@ORM\JoinColumn(name="foreign",referencedColumnName="joined")})
+
+
+
+
+
+
+
+
+
+
 */
 private \$foreign;
 

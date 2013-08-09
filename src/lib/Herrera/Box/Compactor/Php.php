@@ -121,10 +121,10 @@ class Php extends Compactor
 
         foreach ($annotations as $annotation) {
             $annotation = new Tokens($annotation);
-            $docblock .= "\n*" . $this->converter->convert($annotation);
+            $docblock .= "\n" . $this->converter->convert($annotation);
         }
 
-        $docblock .= str_repeat("\n*", $breaks - count($annotations) - 1);
+        $docblock .= str_repeat("\n", $breaks - count($annotations) - 1);
         $docblock .= "\n*/";
 
         return $docblock;
