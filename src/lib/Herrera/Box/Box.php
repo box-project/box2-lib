@@ -9,6 +9,7 @@ use Herrera\Box\Exception\InvalidArgumentException;
 use Herrera\Box\Exception\OpenSslException;
 use Herrera\Box\Exception\UnexpectedValueException;
 use Phar;
+use Phine\Path\Path;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
@@ -157,7 +158,7 @@ class Box
     public function buildFromIterator(Traversable $iterator, $base = null)
     {
         if ($base) {
-            $base = canonical_path($base . DIRECTORY_SEPARATOR);
+            $base = Path::canonical($base . DIRECTORY_SEPARATOR);
         }
 
         foreach ($iterator as $key => $value) {
@@ -169,8 +170,8 @@ class Box
                     );
                 }
 
-                $key = canonical_path($key);
-                $value = canonical_path($value);
+                $key = Path::canonical($key);
+                $value = Path::canonical($value);
 
                 if (is_dir($value)) {
                     $this->phar->addEmptyDir($key);

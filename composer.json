@@ -17,7 +17,7 @@
     "require": {
         "php": ">=5.3.3",
         "ext-phar": "*",
-        "herrera-io/file-system-functions": "1.*"
+        "phine/path": "~1.0"
     },
     "require-dev": {
         "herrera-io/annotations": "~1.0",
