@@ -1,6 +1,8 @@
 Box
 ===
 
+> This library will eventually be deprecated in favor of [phine/phar](https://github.com/phine/lib-phar). Please consider switching now and submitting issues or feature requests if necessary.
+
 [![Build Status][]](https://travis-ci.org/herrera-io/php-box)
 
 Box is a library built on the [`Phar`][] class. It is designed to make it
