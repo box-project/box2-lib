@@ -22,7 +22,7 @@ class OpenSsl extends AbstractPublicKey
 
         $result = openssl_verify(
             $this->getData(),
-            pack('H*', $signature),
+            @pack('H*', $signature),
             $this->getKey()
         );
 
