@@ -166,6 +166,7 @@ class ComposerAutoloaderInitc22fe6e3e5ad79bad24655b3e52999df
 {
     private static \$loader;
 
+    /** @inline annotation */
     public static function loadClassLoader(\$class)
     {
         if ('Composer\Autoload\ClassLoader' === \$class) {
@@ -225,6 +226,7 @@ class ComposerAutoloaderInitc22fe6e3e5ad79bad24655b3e52999df
 {
 private static \$loader;
 
+
 public static function loadClassLoader(\$class)
 {
 if ('Composer\Autoload\ClassLoader' === \$class) {
@@ -273,7 +275,7 @@ return \$loader;
 CODE;
 
         $tokenizer = new Tokenizer();
-        $tokenizer->ignore(array('author'));
+        $tokenizer->ignore(array('author', 'inline'));
 
         $this->php->setTokenizer($tokenizer);
 

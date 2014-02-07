@@ -124,8 +124,14 @@ class Php extends Compactor
             $docblock .= "\n" . $this->converter->convert($annotation);
         }
 
-        $docblock .= str_repeat("\n", $breaks - count($annotations) - 1);
-        $docblock .= "\n*/";
+        $breaks -= count($annotations);
+
+        if ($breaks > 0) {
+            $docblock .= str_repeat("\n", $breaks - 1);
+            $docblock .= "\n*/";
+        } else {
+            $docblock .= ' */';
+        }
 
         return $docblock;
     }
