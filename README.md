@@ -1,9 +1,7 @@
 Box
 ===
 
-> This library will eventually be deprecated in favor of [phine/phar](https://github.com/phine/lib-phar). Please consider switching now and submitting issues or feature requests if necessary.
-
-[![Build Status][]](https://travis-ci.org/herrera-io/php-box)
+[![Build Status][]](https://travis-ci.org/box-project/box2-lib)
 
 Box is a library built on the [`Phar`][] class. It is designed to make it
 easier to create new phars and modifying existing ones. Features include
@@ -493,7 +491,7 @@ You can also sign the phar using a private key contained with a file.
 $box->signUsingFile($file, $pass);
 ```
 
-[Build Status]: https://travis-ci.org/herrera-io/php-box.png?branch=master
+[Build Status]: https://travis-ci.org/box-project/box2-lib.png?branch=master
 [`Phar`]: http://us3.php.net/manual/en/class.phar.php
 [`CompactorInterface`]: src/lib/Herrera/Box/Compactor/CompactorInterface.php
 [`herrera-io/annotations`]: https://github.com/herrera-io/php-annotations
