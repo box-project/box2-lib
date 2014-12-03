@@ -233,13 +233,12 @@ class StubGenerator
     public function generate()
     {
         $stub = array();
+
         if ('' !== $this->shebang) {
             $stub[] = $this->shebang;
         }
 
         $stub[] = '<?php';
-
-        $stub = array($this->shebang, '<?php');
 
         if (null !== $this->banner) {
             $stub[] = $this->getBanner();
