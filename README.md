@@ -157,6 +157,18 @@ $example->setExtensions(
 
 The library has two compactors bundled for your convenience.
 
+```php
+use Herrera\Box\Compactor\Javascript;
+
+$compactor = new Javascript();
+```
+
+##### Compacting JavaScript
+
+The `JavaScript` compactor will minify JavaScript files, but requires the
+[`tedivm/jshrink`][] packages to work. This is included when you install
+the Box library.
+
 ##### Compacting JSON
 
 The `JSON` compactor is very simple to use as there are no options to
@@ -494,4 +506,5 @@ $box->signUsingFile($file, $pass);
 [Build Status]: https://travis-ci.org/box-project/box2-lib.png?branch=master
 [`Phar`]: http://us3.php.net/manual/en/class.phar.php
 [`CompactorInterface`]: src/lib/Herrera/Box/Compactor/CompactorInterface.php
+[`tedivm/jshrink`]: https://github.com/tedious/JShrink
 [`herrera-io/annotations`]: https://github.com/herrera-io/php-annotations
