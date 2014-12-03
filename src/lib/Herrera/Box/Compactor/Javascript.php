@@ -24,9 +24,8 @@ class Javascript extends Compactor
     public function compact($contents)
     {
         try {
-
             return Minifier::minify($contents);
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
 
             return $contents;
         }
@@ -37,7 +36,7 @@ class Javascript extends Compactor
      */
     public function supports($file)
     {
-        if(!parent::supports($file)) {
+        if (!parent::supports($file)) {
             return false;
         }
 
