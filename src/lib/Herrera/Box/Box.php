@@ -157,6 +157,8 @@ class Box
      */
     public function buildFromIterator(Traversable $iterator, $base = null)
     {
+        $this->phar->startBuffering();
+
         if ($base) {
             $base = Path::canonical($base . DIRECTORY_SEPARATOR);
         }
@@ -164,6 +166,7 @@ class Box
         foreach ($iterator as $key => $value) {
             if (is_string($value)) {
                 if (false === is_string($key)) {
+                    $this->phar->stopBuffering();
                     throw UnexpectedValueException::create(
                         'The key returned by the iterator (%s) is not a string.',
                         gettype($key)
@@ -180,6 +183,7 @@ class Box
                 }
             } elseif ($value instanceof SplFileInfo) {
                 if (null === $base) {
+                    $this->phar->stopBuffering();
                     throw InvalidArgumentException::create(
                         'The $base argument is required for SplFileInfo values.'
                     );
@@ -189,6 +193,7 @@ class Box
                 $real = $value->getRealPath();
 
                 if (0 !== strpos($real, $base)) {
+                    $this->phar->stopBuffering();
                     throw UnexpectedValueException::create(
                         'The file "%s" is not in the base directory.',
                         $real
@@ -203,12 +208,14 @@ class Box
                     $this->addFile($real, $local);
                 }
             } else {
+                $this->phar->stopBuffering();
                 throw UnexpectedValueException::create(
                     'The iterator value "%s" was not expected.',
                     gettype($value)
                 );
             }
         }
+        $this->phar->stopBuffering();
     }
 
     /**
