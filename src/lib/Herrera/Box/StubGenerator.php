@@ -13,6 +13,21 @@ use Herrera\Box\Exception\InvalidArgumentException;
 class StubGenerator
 {
     /**
+     * The list of allowed LSB init parameters
+     *
+     * @var array
+     */
+    private static $allowedLsbInitParams = array(
+        'Provides',
+        'Required-Start',
+        'Required-Stop',
+        'Default-Start',
+        'Default-Stop',
+        'Short-Description',
+        'Description'
+    );
+
+    /**
      * The list of server variables that are allowed to be modified.
      *
      * @var array
@@ -74,6 +89,20 @@ class StubGenerator
      * @var boolean
      */
     private $intercept = false;
+
+    /**
+     * include LSB Init standard parameters in stub header?
+     *
+     * @var boolean
+     */
+    private $lsbInit = false;
+
+    /**
+     * LSB Init parameter array.
+     *
+     * @var array
+     */
+    private $lsbInitParams = array();
 
     /**
      * The map for file extensions and their mimetypes.
@@ -226,6 +255,34 @@ class StubGenerator
     }
 
     /**
+     * Sets an LSB init parameter
+     *
+     * @param string $param The name of the parameter
+     * @param string $value The value of the parameter
+     *
+     * @return StubGenerator The stub generator.
+     *
+     * @throws Exception\Exception
+     * @throws InvalidArgumentException If the list contains an invalid value.
+     */
+    public function lsbInitParam($param, $value)
+    {
+        $param = ucwords($param, '-');
+
+        if (false === in_array($param, self::$allowedLsbInitParams)) {
+            throw InvalidArgumentException::create(
+                'The LSB init parameter "%s" is not allowed.',
+                $param
+            );
+        }
+
+        $this->lsbInitParams[$param] = $value;
+        $this->lsbInit = true;
+
+        return $this;
+    }
+
+    /**
      * Generates the stub.
      *
      * @return string The stub.
@@ -239,6 +296,29 @@ class StubGenerator
         }
 
         $stub[] = '<?php';
+
+        if ($this->lsbInit) {
+            $stub[] = '/*';
+            $stub[] = '### BEGIN INIT INFO';
+
+            $maxKeyLength = max(array_map('strlen', array_keys($this->lsbInitParams)));
+            $lsbInitParams = array();
+
+            foreach (self::$allowedLsbInitParams as $allowedParam) {
+                if (isset($this->lsbInitParams[$allowedParam])) {
+                    $lsbInitParams[$allowedParam] = $this->lsbInitParams[$allowedParam];
+                }
+            }
+
+            foreach ($lsbInitParams as $param => $value) {
+                $stub[] = '# ' . str_pad($param . ':', $maxKeyLength + 3) . $value;
+            }
+
+            unset ($allowedParam, $param, $value);
+
+            $stub[] = '### END INIT INFO';
+            $stub[] = '*/';
+        }
 
         if (null !== $this->banner) {
             $stub[] = $this->getBanner();
