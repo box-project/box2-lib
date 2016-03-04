@@ -267,7 +267,7 @@ class StubGenerator
      */
     public function lsbInitParam($param, $value)
     {
-        $param = ucwords($param, '-');
+        $param = implode('-', array_map('ucfirst', explode('-', strtolower($param))));
 
         if (false === in_array($param, self::$allowedLsbInitParams)) {
             throw InvalidArgumentException::create(
