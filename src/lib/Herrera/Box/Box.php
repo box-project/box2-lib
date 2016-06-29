@@ -107,7 +107,7 @@ class Box
             new \ArrayIterator($this->fileQueue),
             $this->excludedFromValueReplaceBasePath
         );
-        $this->fileQueue = [];
+        $this->fileQueue = array();
     }
 
     /**
