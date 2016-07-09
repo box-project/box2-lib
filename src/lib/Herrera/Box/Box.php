@@ -53,6 +53,23 @@ class Box
     private $values = array();
 
     /**
+     * An array of files to add via the faster queueing method
+     *
+     * @var array
+     */
+    private $fileQueue = array();
+
+    /**
+     * @var array
+     */
+    private $excludedFromValueReplace = array();
+
+    /**
+     * @var string
+     */
+    private $excludedFromValueReplaceBasePath = '';
+
+    /**
      * Sets the Phar instance.
      *
      * @param Phar   $phar The instance.
@@ -75,6 +92,42 @@ class Box
         $this->compactors->attach($compactor);
     }
 
+
+    /**
+     * adds the files in the queue to the phar file
+     *
+     * @return void
+     */
+    public function addFilesFromQueue()
+    {
+        if (count($this->fileQueue) == 0) {
+            return;
+        }
+        $this->phar->buildFromIterator(
+            new \ArrayIterator($this->fileQueue),
+            $this->excludedFromValueReplaceBasePath
+        );
+        $this->fileQueue = array();
+    }
+
+    /**
+     * Checks if the file should be variable replaced or should be queued
+     *
+     * @param string $local
+     * @return boolean
+     */
+    private function shouldValueReplace($local)
+    {
+        if (count($this->excludedFromValueReplace) == 0) {
+            return true;
+        }
+        foreach ($this->excludedFromValueReplace as $regexp) {
+            if (preg_match($regexp, $local) > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
     /**
      * Adds a file to the Phar, after compacting it and replacing its
      * placeholders.
@@ -90,19 +143,20 @@ class Box
         if (null === $local) {
             $local = $file;
         }
-
         if (false === is_file($file)) {
             throw FileException::create(
                 'The file "%s" does not exist or is not a file.',
                 $file
             );
         }
-
         if (false === ($contents = @file_get_contents($file))) {
             throw FileException::lastError();
         }
-
-        $this->addFromString($local, $contents);
+        if ($this->shouldValueReplace($local)) {
+            $this->addFromString($local, $contents);
+        } else {
+            $this->fileQueue[$local] = $file;
+        }
     }
 
     /**
@@ -312,6 +366,19 @@ class Box
         }
 
         $this->phar->setStub($contents);
+    }
+
+    /**
+     * Sets the regular expressions for files that don't have to be value replaced
+     *
+     * @param array  $regexps
+     * @param string $basePath
+     * @return void
+     */
+    public function setExcludedFromValueReplace($regexps, $basePath)
+    {
+        $this->excludedFromValueReplace = $regexps;
+        $this->excludedFromValueReplaceBasePath = $basePath;
     }
 
     /**
