@@ -427,7 +427,7 @@ replacements.
 ```php
 $box->setValues(
     array(
-        'match' => 'replace'
+        '@match@' => 'replace'
     )
 );
 ```
