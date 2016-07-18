@@ -4,6 +4,7 @@ namespace Herrera\Box;
 
 use FilesystemIterator;
 use Herrera\Box\Compactor\CompactorInterface;
+use Herrera\Box\Exception\Exception;
 use Herrera\Box\Exception\FileException;
 use Herrera\Box\Exception\InvalidArgumentException;
 use Herrera\Box\Exception\OpenSslException;
@@ -161,54 +162,62 @@ class Box
             $base = Path::canonical($base . DIRECTORY_SEPARATOR);
         }
 
-        foreach ($iterator as $key => $value) {
-            if (is_string($value)) {
-                if (false === is_string($key)) {
-                    throw UnexpectedValueException::create(
-                        'The key returned by the iterator (%s) is not a string.',
-                        gettype($key)
-                    );
-                }
+        $this->phar->startBuffering();
+        try {
+            foreach ($iterator as $key => $value) {
+                if (is_string($value)) {
+                    if (false === is_string($key)) {
+                        throw UnexpectedValueException::create(
+                          'The key returned by the iterator (%s) is not a string.',
+                          gettype($key)
+                        );
+                    }
 
-                $key = Path::canonical($key);
-                $value = Path::canonical($value);
+                    $key = Path::canonical($key);
+                    $value = Path::canonical($value);
 
-                if (is_dir($value)) {
-                    $this->phar->addEmptyDir($key);
+                    if (is_dir($value)) {
+                        $this->phar->addEmptyDir($key);
+                    } else {
+                        $this->addFile($value, $key);
+                    }
+                } elseif ($value instanceof SplFileInfo) {
+                    if (null === $base) {
+                        throw InvalidArgumentException::create(
+                          'The $base argument is required for SplFileInfo values.'
+                        );
+                    }
+
+                    /** @var $value SplFileInfo */
+                    $real = $value->getRealPath();
+
+                    if (0 !== strpos($real, $base)) {
+                        throw UnexpectedValueException::create(
+                          'The file "%s" is not in the base directory.',
+                          $real
+                        );
+                    }
+
+                    $local = str_replace($base, '', $real);
+
+                    if ($value->isDir()) {
+                        $this->phar->addEmptyDir($local);
+                    } else {
+                        $this->addFile($real, $local);
+                    }
                 } else {
-                    $this->addFile($value, $key);
-                }
-            } elseif ($value instanceof SplFileInfo) {
-                if (null === $base) {
-                    throw InvalidArgumentException::create(
-                        'The $base argument is required for SplFileInfo values.'
-                    );
-                }
-
-                /** @var $value SplFileInfo */
-                $real = $value->getRealPath();
-
-                if (0 !== strpos($real, $base)) {
                     throw UnexpectedValueException::create(
-                        'The file "%s" is not in the base directory.',
-                        $real
+                      'The iterator value "%s" was not expected.',
+                      gettype($value)
                     );
                 }
-
-                $local = str_replace($base, '', $real);
-
-                if ($value->isDir()) {
-                    $this->phar->addEmptyDir($local);
-                } else {
-                    $this->addFile($real, $local);
-                }
-            } else {
-                throw UnexpectedValueException::create(
-                    'The iterator value "%s" was not expected.',
-                    gettype($value)
-                );
             }
+        } catch (Exception $e) {
+            $this->phar->stopBuffering();
+            throw $e;
         }
+
+        $this->phar->stopBuffering();
     }
 
     /**
