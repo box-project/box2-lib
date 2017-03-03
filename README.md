@@ -183,8 +183,8 @@ $compactor = new Json();
 
 ##### Compacting PHP
 
-The `PHP` compactor will strip all comments whitespace from `.php` files.
-Comments that are removed will be removed with an the same number of line
+The `PHP` compactor will strip all comments and whitespace from `.php` files.
+Comments that are removed will be replaced with the same number of line
 breaks as the original comment. This is done in order to preserve the line
 number that is reported when errors occur in the phar.
 
@@ -390,7 +390,7 @@ of these features in a (hopefully) simple to use interface.
 There are two ways of instantiating the class:
 
 ```php
-user Herrera\Box\Box;
+use Herrera\Box\Box;
 
 // use an existing Phar instance
 $box = new Box($phar);
