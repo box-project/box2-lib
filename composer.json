@@ -18,7 +18,8 @@
         "php": ">=5.3.3",
         "ext-phar": "*",
         "tedivm/jshrink": "~1.0",
-        "phine/path": "~1.0"
+        "phine/path": "~1.0",
+        "symfony/filesystem": "3.4"
     },
     "require-dev": {
         "herrera-io/annotations": "~1.0",

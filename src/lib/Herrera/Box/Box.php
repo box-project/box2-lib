@@ -15,6 +15,7 @@ use RecursiveIteratorIterator;
 use RegexIterator;
 use SplFileInfo;
 use SplObjectStorage;
+use Symfony\Component\Filesystem\Filesystem;
 use Traversable;
 
 /**
@@ -39,6 +40,16 @@ class Box
     private $file;
 
     /**
+     * Lazy mode.
+     * If enabled, all operations write to a temporariy file and you
+     * have to call ->build() explicitly after adding all the files.
+     * This improves performance considerably.
+     *
+     * @var bool
+     */
+    private $lazy;
+
+    /**
      * The Phar instance.
      *
      * @var Phar
@@ -53,16 +64,33 @@ class Box
     private $values = array();
 
     /**
+     * @var string
+     */
+    private $tmpDir;
+
+    /**
+     * @var Filesystem
+     */
+    private $fs;
+
+    /**
      * Sets the Phar instance.
      *
      * @param Phar   $phar The instance.
      * @param string $file The path to the Phar file.
+     * @param bool   $lazy Whether to add data lazily (@see flushLazy())
      */
-    public function __construct(Phar $phar, $file)
+    public function __construct(Phar $phar, $file, $lazy = false)
     {
         $this->compactors = new SplObjectStorage();
         $this->file = $file;
         $this->phar = $phar;
+        $this->lazy = $lazy;
+
+        if ($this->lazy) {
+            $this->createTmpDir();
+            $this->fs = new Filesystem();
+        }
     }
 
     /**
@@ -106,7 +134,7 @@ class Box
     }
 
     /**
-     * Adds the contents from a file to the Phar, after compacting it and
+     * Adds the contents from a file to the tmp dir, after compacting it and
      * replacing its placeholders.
      *
      * @param string $local    The local name.
@@ -114,10 +142,42 @@ class Box
      */
     public function addFromString($local, $contents)
     {
+        if ($this->lazy) {
+            $this->fs->dumpFile($this->tmpDir . '/' . $local,
+                $this->replaceValues($this->compactContents($local, $contents))
+            );
+
+            return;
+        }
+
         $this->phar->addFromString(
             $local,
             $this->replaceValues($this->compactContents($local, $contents))
         );
+    }
+
+    /**
+     * Flushes the lazy "cache".
+     * By setting the Box to use the lazy mode, files are written to a temporary
+     * directory rather than added as a string to the phar directly.
+     * Phar::addFromString() is really slow and so writing to a temporary directory
+     * and then adding all of the data using Phar::buildFromDirectory() is the
+     * way to go and is a lot faster. This means you can call addFile() and
+     * addFromString() on this class as many times as you want, it will only ever
+     * write it to the phar once you call flushLazy(). It's even better: You can
+     * still add more data afterwards, it's absolutely no problem but of course
+     * it's better to add it all and then call flushLazy() only when you're done.
+     */
+    public function flushLazy()
+    {
+        if (!$this->lazy) {
+            throw new \BadMethodCallException('Cannot flush lazy if lazy mode was not enabled.');
+        }
+
+        $this->phar->buildFromDirectory($this->tmpDir);
+
+        // Clean tmp dir to be ready for the next round
+        $this->createTmpDir();
     }
 
     /**
@@ -237,12 +297,13 @@ class Box
      * @param string  $file  The file name.
      * @param integer $flags The RecursiveDirectoryIterator flags.
      * @param string  $alias The Phar alias.
+     * @param bool    $lazy  Whether to add data lazily (@see flushLazy())
      *
      * @return Box The Box instance.
      */
-    public static function create($file, $flags = null, $alias = null)
+    public static function create($file, $flags = null, $alias = null, $lazy = false)
     {
-        return new Box(new Phar($file, $flags, $alias), $file);
+        return new Box(new Phar($file, $flags, $alias), $file, $lazy);
     }
 
     /**
@@ -406,5 +467,22 @@ class Box
         }
 
         $this->sign($key, $password);
+    }
+
+    /**
+     * Creates the temp dir the files are written to and the phar is built from
+     * then.
+     * This reduces the need to use Phar::buildFromString() which is
+     * very slow.
+     */
+    private function createTmpDir()
+    {
+        $this->tmpDir = sys_get_temp_dir() . '/box2/' . sha1($this->file);
+
+        if (is_dir($this->tmpDir)) {
+            @unlink($this->tmpDir);
+        }
+
+        @mkdir($this->tmpDir);
     }
 }
